@@ -1,0 +1,11 @@
+<style>
+  :host {
+    --primary-color: #8B6F47;
+    --secondary-color: #D4AF37;
+    --accent-color: #E8DCC8;
+    --font-primary: Nunito, sans-serif;
+    --font-secondary: Playfair Display, serif;
+  }
+</style>
+<app-header *ngIf="showHeader$ | async"></app-header>
+<router-outlet />

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="geometricPrecision">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8B6F47"/>
+      <stop offset="100%" stop-color="#6b5436"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded brand tile -->
+  <rect x="2" y="2" width="60" height="60" rx="12" ry="12" fill="url(#bg)"/>
+  <!-- Decorative inner ring -->
+  <rect x="6" y="6" width="52" height="52" rx="9" ry="9" fill="none" stroke="#C9A96E" stroke-width="1.2" opacity="0.7"/>
+  <!-- Monogram H in Playfair-style serif -->
+  <text x="32" y="40"
+        text-anchor="middle"
+        font-family="'Playfair Display', 'Times New Roman', serif"
+        font-size="34"
+        font-weight="500"
+        fill="#E8DCC8"
+        letter-spacing="1">H</text>
+  <!-- SPA micro-label -->
+  <text x="32" y="54"
+        text-anchor="middle"
+        font-family="'Playfair Display', 'Times New Roman', serif"
+        font-size="8"
+        font-weight="400"
+        fill="#C9A96E"
+        letter-spacing="3">SPA</text>
+</svg>
+
