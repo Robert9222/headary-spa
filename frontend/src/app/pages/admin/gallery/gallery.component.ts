@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '@services/api.service';
+import { ContentService } from '@services/content.service';
 
 interface GalleryFile {
   name: string;
@@ -48,14 +49,14 @@ interface GalleryFile {
     <div class="grid gallery-grid" *ngIf="!loading && files.length">
       <div class="tile" *ngFor="let f of files" [class.busy]="f._deleting">
         <div class="thumb">
-          <img [src]="f.url" [alt]="f.name" loading="lazy" />
+          <img [src]="content.resolveImage(f.url)" [alt]="f.name" loading="lazy" />
         </div>
         <div class="meta">
           <strong [title]="f.name">{{ f.name }}</strong>
           <small>{{ formatSize(f.size) }} · {{ f.modified * 1000 | date:'dd.MM.yyyy HH:mm' }}</small>
         </div>
         <div class="tile-actions">
-          <a class="btn ghost sm" [href]="f.url" target="_blank" rel="noopener">Podgląd</a>
+          <a class="btn ghost sm" [href]="content.resolveImage(f.url)" target="_blank" rel="noopener">Podgląd</a>
           <button class="btn sm" (click)="copyUrl(f)">Kopiuj URL</button>
           <button class="btn danger sm" (click)="remove(f)" [disabled]="f._deleting">
             {{ f._deleting ? '…' : 'Usuń' }}
@@ -109,6 +110,7 @@ interface GalleryFile {
 })
 export class AdminGalleryComponent implements OnInit {
   private api = inject(ApiService);
+  public content = inject(ContentService);
 
   files: GalleryFile[] = [];
   loading = true;
@@ -188,7 +190,7 @@ export class AdminGalleryComponent implements OnInit {
   }
 
   copyUrl(f: GalleryFile): void {
-    const url = f.url;
+    const url = this.content.resolveImage(f.url);
     const done = () => this.showOk('Skopiowano URL do schowka.');
     if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(url).then(done, () => this.fallbackCopy(url, done));
