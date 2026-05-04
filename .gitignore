@@ -16,8 +16,6 @@ $RECYCLE.BIN/
 
 # ====== Środowisko / sekrety ======
 # (Te pliki NIGDY nie powinny trafić na GitLaba)
-.env
-.env.local
 .env.*.local
 *.pem
 *.key
@@ -35,7 +33,6 @@ backend/database/*.sqlite-journal
 # ====== Storage uploadów (zachowujemy strukturę katalogów, nie pliki userów) ======
 backend/storage/app/public/*
 !backend/storage/app/public/.gitkeep
-backend/public/storage
 
 # ====== Frontend build / cache ======
 frontend/dist/
