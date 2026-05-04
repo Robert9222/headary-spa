@@ -217,9 +217,10 @@ export class AdminLayoutComponent {
   nav: NavItem[] = [
     { path: '/admin/dashboard', label: 'Dashboard', icon: '▦', exact: true },
     { path: '/admin/pages', label: 'Strony (CMS)', icon: '✎' },
-    { path: '/admin/reviews', label: 'Opinie', icon: '★' },
-    { path: '/admin/gallery', label: 'Galeria', icon: '▣' },
     { path: '/admin/services', label: 'Usługi', icon: '✿' },
+    { path: '/admin/employees', label: 'Zespół', icon: '☺' },
+    { path: '/admin/gallery', label: 'Galeria', icon: '▣' },
+    { path: '/admin/reviews', label: 'Opinie', icon: '★' },
     { path: '/admin/settings', label: 'Ustawienia', icon: '⚙' },
     { path: '/admin/account', label: 'Konto', icon: '👤' },
   ];

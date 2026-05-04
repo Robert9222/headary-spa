@@ -1,6 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { ApiService } from '../../services/api.service';
+import { TranslationService } from '../../services/translation.service';
 import { Service } from '../../models';
 
 @Component({
@@ -14,10 +17,10 @@ import { Service } from '../../models';
 
         <div class="services-grid">
           <div *ngFor="let service of services" class="service-detail-card">
-            <img [src]="service.image_url" [alt]="service.name" class="service-image">
+            <img [src]="service.image_url" [alt]="serviceName(service)" class="service-image">
             <div class="service-info">
-              <h2>{{ service.name }}</h2>
-              <p class="description">{{ service.description }}</p>
+              <h2>{{ serviceName(service) }}</h2>
+              <p class="description">{{ serviceDescription(service) }}</p>
 
               <div class="service-meta">
                 <div class="meta-item">
@@ -143,22 +146,51 @@ import { Service } from '../../models';
     }
   `]
 })
-export class ServicesComponent implements OnInit {
+export class ServicesComponent implements OnInit, OnDestroy {
   services: Service[] = [];
+  lang = 'pl';
+  private destroy$ = new Subject<void>();
 
-  constructor(private apiService: ApiService) {}
+  constructor(
+    private apiService: ApiService,
+    private translation: TranslationService,
+  ) {}
 
   ngOnInit(): void {
+    this.lang = this.translation.getLanguage() || 'pl';
+    this.translation.currentLanguage$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(l => (this.lang = l));
+
     this.apiService.getServices().subscribe(
       (data) => this.services = data.sort((a, b) => a.order - b.order),
       (error) => console.error('Error loading services:', error)
     );
   }
 
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  serviceName(service: Service): string {
+    return this.pickLocalized(service.name);
+  }
+
+  serviceDescription(service: Service): string {
+    return this.pickLocalized(service.description);
+  }
+
+  private pickLocalized(v: string | { [lang: string]: string } | null | undefined): string {
+    if (!v) return '';
+    if (typeof v === 'string') return v;
+    return v[this.lang] || v['pl'] || v['en'] || v['fi'] || Object.values(v)[0] || '';
+  }
+
   isKobido(service: Service): boolean {
     const name = typeof service.name === 'string'
       ? service.name
-      : (service.name as any)?.en ?? '';
+      : (service.name as any)?.en ?? (service.name as any)?.pl ?? '';
     return name.toLowerCase().includes('kobido');
   }
 }

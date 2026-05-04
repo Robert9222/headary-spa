@@ -14,6 +14,7 @@ import { AdminGalleryComponent } from '@pages/admin/gallery/gallery.component';
 import { AdminServicesComponent } from '@pages/admin/services/services.component';
 import { AdminSettingsComponent } from '@pages/admin/settings/settings.component';
 import { AdminAccountComponent } from '@pages/admin/account/account.component';
+import { AdminEmployeesComponent } from '@pages/admin/employees/employees.component';
 import { AdminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
@@ -41,6 +42,7 @@ export const routes: Routes = [
       { path: 'reviews', component: AdminReviewsComponent },
       { path: 'gallery', component: AdminGalleryComponent },
       { path: 'services', component: AdminServicesComponent },
+      { path: 'employees', component: AdminEmployeesComponent },
       { path: 'settings', component: AdminSettingsComponent },
       { path: 'account', component: AdminAccountComponent },
     ],

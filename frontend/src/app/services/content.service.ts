@@ -58,7 +58,7 @@ export class ContentService {
     if (!url) return '';
     if (/^(https?:|data:|blob:|assets\/)/i.test(url)) return url;
     // storage paths: "/storage/..." or "storage/..."
-    const base = 'http://localhost:8000';
+    const base = 'https://headaryspa.motivogroup.pl';
     return url.startsWith('/') ? `${base}${url}` : `${base}/${url}`;
   }
 }

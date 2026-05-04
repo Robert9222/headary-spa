@@ -30,6 +30,8 @@ class DatabaseSeeder extends Seeder
             GallerySeeder::class,
             SettingSeeder::class,
             KobidoPageSeeder::class,
+            HomePageSeeder::class,
+            HeadarySpaPageSeeder::class,
         ]);
     }
 }

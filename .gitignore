@@ -57,3 +57,15 @@ node_modules/
 coverage/
 .nyc_output/
 
+# ====== Backupy / dumpy bazy / archiwa (NIE wrzucamy na GitHub) ======
+backend.zip
+*.zip
+exports/
+*.sql
+*.sqlite
+*.sqlite-journal
+backend/_backfill.php
+backend/dump-sqlite.php
+backend/dump-postgres.php
+
+

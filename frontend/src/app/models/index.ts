@@ -1,8 +1,9 @@
 export interface Service {
   id: number;
-  name: string;
+  /** Może być stringiem (legacy) albo obiektem tłumaczeń { pl, en, fi }. */
+  name: string | { [lang: string]: string };
   category: string;
-  description: string;
+  description: string | { [lang: string]: string };
   price: number;
   duration_minutes: number;
   image_url: string;

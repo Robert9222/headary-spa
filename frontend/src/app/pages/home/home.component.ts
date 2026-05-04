@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ApiService } from '@services/api.service';
+import { ContentService } from '@services/content.service';
 import { TranslationService } from '@services/translation.service';
-import { GalleryItem, Service, Review } from '@app/models';
+import { GalleryItem, Service, Review, PageSection } from '@app/models';
 import { Subject, interval } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -25,9 +26,10 @@ import { takeUntil } from 'rxjs/operators';
         </div>
         <div class="hero-overlay">
           <div class="hero-content">
-            <h1>{{ translate('hero.welcome') }}</h1>
-            <p>{{ translate('hero.subtitle') }}</p>
-            <a href="https://timma.no/salon/headary-spa" target="_blank" class="cta-btn">{{ translate('hero.cta') }}</a>
+            <h1>{{ cmsTitle('hero', 'hero.welcome') }}</h1>
+            <p>{{ cmsBody('hero', 'hero.subtitle') }}</p>
+            <a [href]="cmsMetaString('hero', 'cta_url', 'https://timma.no/salon/headary-spa')"
+               target="_blank" class="cta-btn">{{ cmsCtaLabel('hero', 'hero.cta') }}</a>
           </div>
         </div>
         <div class="slider-dots">
@@ -40,9 +42,9 @@ import { takeUntil } from 'rxjs/operators';
       <!-- Welcome Section -->
       <section class="welcome-section animate-on-scroll" id="about">
         <div class="container">
-          <h2 class="welcome-title">{{ translate('welcome.title') }}</h2>
+          <h2 class="welcome-title">{{ cmsTitle('welcome', 'welcome.title') }}</h2>
           <div class="welcome-divider"></div>
-          <p class="welcome-text">{{ translate('welcome.description') }}</p>
+          <p class="welcome-text">{{ cmsBody('welcome', 'welcome.description') }}</p>
         </div>
       </section>
 
@@ -50,14 +52,19 @@ import { takeUntil } from 'rxjs/operators';
       <section class="about-section animate-on-scroll" id="about-me">
         <div class="container about-grid">
           <div class="about-image">
-            <img src="assets/images/me.jpg" alt="Eliza - Headary SPA">
+            <img [src]="cmsImage('about', 'assets/images/me.jpg')" alt="Eliza - Headary SPA">
           </div>
           <div class="about-content">
-            <h2 class="section-title">{{ translate('about.title') }}</h2>
-            <p>{{ translate('about.p1') }}</p>
-            <p>{{ translate('about.p2') }}</p>
-            <p>{{ translate('about.p3') }}</p>
-            <p class="about-highlight">{{ translate('about.p4') }}</p>
+            <h2 class="section-title">{{ cmsTitle('about', 'about.title') }}</h2>
+            <ng-container *ngIf="cmsHasBody('about'); else aboutFallback">
+              <div class="about-prose" [innerHTML]="content.md(cmsBody('about'))"></div>
+            </ng-container>
+            <ng-template #aboutFallback>
+              <p>{{ translate('about.p1') }}</p>
+              <p>{{ translate('about.p2') }}</p>
+              <p>{{ translate('about.p3') }}</p>
+              <p class="about-highlight">{{ translate('about.p4') }}</p>
+            </ng-template>
           </div>
         </div>
       </section>
@@ -67,7 +74,7 @@ import { takeUntil } from 'rxjs/operators';
       <!-- Services Section - Grouped by Category -->
       <section class="services-section animate-on-scroll" id="services">
         <div class="container">
-          <h2 class="section-title">{{ translate('services.title') }}</h2>
+          <h2 class="section-title">{{ cmsTitle('services-intro', 'services.title') }}</h2>
 
           <div *ngFor="let category of serviceCategories" class="category-block">
             <h3 class="category-title">{{ translateCategory(category) }}</h3>
@@ -83,8 +90,8 @@ import { takeUntil } from 'rxjs/operators';
                     {{ translate('hero.cta') }} →
                   </a>
                 </div>
-                <div class="service-image" *ngIf="getServiceImage(service.name)">
-                  <img [src]="getServiceImage(service.name)" [alt]="translateServiceName(service)">
+                <div class="service-image" *ngIf="getServiceImage(service)">
+                  <img [src]="getServiceImage(service)" [alt]="translateServiceName(service)">
                 </div>
               </div>
             </div>
@@ -95,33 +102,43 @@ import { takeUntil } from 'rxjs/operators';
       <!-- How It Works Section -->
       <section class="how-it-works-section animate-on-scroll" id="how-it-works">
         <div class="container">
-          <h2 class="section-title">{{ translate('howItWorks.title') }}</h2>
-          <div class="steps-grid">
-            <div class="step-card">
-              <div class="step-icon">📅</div>
-              <div class="step-number">1</div>
-              <h3 class="step-title">{{ translate('howItWorks.step1.title') }}</h3>
-              <p class="step-desc">{{ translate('howItWorks.step1.desc') }}</p>
-            </div>
-            <div class="step-card">
-              <div class="step-icon">🧴</div>
-              <div class="step-number">2</div>
-              <h3 class="step-title">{{ translate('howItWorks.step2.title') }}</h3>
-              <p class="step-desc">{{ translate('howItWorks.step2.desc') }}</p>
-            </div>
-            <div class="step-card">
-              <div class="step-icon">💆</div>
-              <div class="step-number">3</div>
-              <h3 class="step-title">{{ translate('howItWorks.step3.title') }}</h3>
-              <p class="step-desc">{{ translate('howItWorks.step3.desc') }}</p>
-            </div>
-            <div class="step-card">
-              <div class="step-icon">✨</div>
-              <div class="step-number">4</div>
-              <h3 class="step-title">{{ translate('howItWorks.step4.title') }}</h3>
-              <p class="step-desc">{{ translate('howItWorks.step4.desc') }}</p>
+          <h2 class="section-title">{{ cmsTitle('how-it-works', 'howItWorks.title') }}</h2>
+          <div class="steps-grid" *ngIf="cmsSteps().length; else stepsFallback">
+            <div class="step-card" *ngFor="let step of cmsSteps(); let i = index">
+              <div class="step-icon">{{ step.icon }}</div>
+              <div class="step-number">{{ i + 1 }}</div>
+              <h3 class="step-title">{{ step.title }}</h3>
+              <p class="step-desc">{{ step.desc }}</p>
             </div>
           </div>
+          <ng-template #stepsFallback>
+            <div class="steps-grid">
+              <div class="step-card">
+                <div class="step-icon">📅</div>
+                <div class="step-number">1</div>
+                <h3 class="step-title">{{ translate('howItWorks.step1.title') }}</h3>
+                <p class="step-desc">{{ translate('howItWorks.step1.desc') }}</p>
+              </div>
+              <div class="step-card">
+                <div class="step-icon">🧴</div>
+                <div class="step-number">2</div>
+                <h3 class="step-title">{{ translate('howItWorks.step2.title') }}</h3>
+                <p class="step-desc">{{ translate('howItWorks.step2.desc') }}</p>
+              </div>
+              <div class="step-card">
+                <div class="step-icon">💆</div>
+                <div class="step-number">3</div>
+                <h3 class="step-title">{{ translate('howItWorks.step3.title') }}</h3>
+                <p class="step-desc">{{ translate('howItWorks.step3.desc') }}</p>
+              </div>
+              <div class="step-card">
+                <div class="step-icon">✨</div>
+                <div class="step-number">4</div>
+                <h3 class="step-title">{{ translate('howItWorks.step4.title') }}</h3>
+                <p class="step-desc">{{ translate('howItWorks.step4.desc') }}</p>
+              </div>
+            </div>
+          </ng-template>
         </div>
       </section>
 
@@ -141,20 +158,20 @@ import { takeUntil } from 'rxjs/operators';
       <section class="voucher-section animate-on-scroll" id="voucher">
         <div class="container voucher-grid">
           <div class="voucher-image">
-            <img src="assets/images/_MG_0183.jpg" alt="Voucher prezentowy">
+            <img [src]="cmsImage('voucher', 'assets/images/_MG_0183.jpg')" alt="Voucher prezentowy">
           </div>
           <div class="voucher-content">
-            <h2 class="section-title">{{ translate('voucher.title') }}</h2>
-            <p class="voucher-intro">{{ translate('voucher.intro') }}</p>
-            <p class="voucher-description">{{ translate('voucher.description') }}</p>
-            <button type="button" class="voucher-btn" (click)="openVoucherModal()">{{ translate('voucher.cta') }} →</button>
+            <h2 class="section-title">{{ cmsTitle('voucher', 'voucher.title') }}</h2>
+            <p class="voucher-intro">{{ cmsSubtitle('voucher', 'voucher.intro') }}</p>
+            <p class="voucher-description">{{ cmsBody('voucher', 'voucher.description') }}</p>
+            <button type="button" class="voucher-btn" (click)="openVoucherModal()">{{ cmsCtaLabel('voucher', 'voucher.cta') }} →</button>
 
             <div class="voucher-terms" [class.open]="termsOpen">
               <button type="button" class="voucher-terms-toggle" (click)="termsOpen = !termsOpen" [attr.aria-expanded]="termsOpen">
-                <span>{{ translate('voucher.termsTitle') }}</span>
+                <span>{{ cmsTitle('voucher-terms', 'voucher.termsTitle') }}</span>
                 <span class="voucher-terms-icon">{{ termsOpen ? '−' : '+' }}</span>
               </button>
-              <div class="voucher-terms-body faq-answer-body" [innerHTML]="formatFaqAnswer(translate('voucher.terms'))"></div>
+              <div class="voucher-terms-body faq-answer-body" [innerHTML]="formatFaqAnswer(cmsBody('voucher-terms', 'voucher.terms'))"></div>
             </div>
           </div>
         </div>
@@ -163,7 +180,7 @@ import { takeUntil } from 'rxjs/operators';
       <!-- Reviews Section -->
       <section class="reviews-section animate-on-scroll" id="reviews">
         <div class="container">
-          <h2 class="section-title">{{ translate('reviews.title') }}</h2>
+          <h2 class="section-title">{{ cmsTitle('reviews-intro', 'reviews.title') }}</h2>
           <div class="reviews-grid">
             <div *ngFor="let review of (reviewsExpanded ? reviews : reviews.slice(0, 3))" class="review-card">
               <div class="review-stars">
@@ -220,7 +237,8 @@ import { takeUntil } from 'rxjs/operators';
             <div class="footer-contact">
               <h4>{{ translate('nav.contact') }}</h4>
               <p>📍 Nortamonkatu 26, Rauma, Finland</p>
-              <p>✉️ headaryspa&#64;gmail.com</p>
+              <p>📞 <a href="tel:+358411441220" class="footer-contact-link">+358 41 144 1220</a></p>
+              <p>✉️ <a href="mailto:headaryspa@gmail.com" class="footer-contact-link">headaryspa&#64;gmail.com</a></p>
             </div>
           </div>
           <div class="footer-map">
@@ -243,7 +261,7 @@ import { takeUntil } from 'rxjs/operators';
                   <path d="M4 17c2.5 1.5 5 2 8 2s5.5-.5 8-2" opacity="0.7"/>
                 </g>
               </svg>
-              {{ translate('footer.disclaimer') }}
+              {{ cmsBody('footer-disclaimer', 'footer.disclaimer') }}
             </p>
           </div>
           <div class="footer-bottom">
@@ -570,6 +588,19 @@ import { takeUntil } from 'rxjs/operators';
       color: var(--primary-color, #8B6F47) !important;
       font-weight: 600;
       font-style: italic;
+    }
+
+    /* Prose rendered from CMS markdown body (about section). */
+    ::ng-deep .about-prose p {
+      color: #555;
+      line-height: 1.8;
+      font-size: 1rem;
+      margin: 0 0 1rem 0;
+    }
+    ::ng-deep .about-prose p:last-child { margin-bottom: 0; }
+    ::ng-deep .about-prose strong {
+      color: var(--primary-color, #8B6F47);
+      font-weight: 600;
     }
 
 
@@ -1268,6 +1299,12 @@ import { takeUntil } from 'rxjs/operators';
       color: rgba(255,255,255,0.8);
       margin: 0 0 0.5rem 0;
     }
+    .footer-contact-link {
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      transition: color .2s ease;
+    }
+    .footer-contact-link:hover { color: var(--secondary-color, #C9A96E); }
 
     .footer-map {
       margin-bottom: 2rem;
@@ -1751,6 +1788,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   serviceCategories: string[] = [];
   galleryItems: GalleryItem[] = [];
   reviews: Review[] = [];
+  /** Sekcje CMS pobrane z `/api/pages/home/sections`, indeksowane po `section_key`. */
+  cms: Record<string, PageSection> = {};
+  lang = 'pl';
   private destroy$ = new Subject<void>();
 
   heroSlides: string[] = [
@@ -1797,11 +1837,18 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   constructor(
     private apiService: ApiService,
     private translationService: TranslationService,
+    public content: ContentService,
     private sanitizer: DomSanitizer,
     private el: ElementRef
   ) {}
 
   ngOnInit(): void {
+    this.lang = this.translationService.getLanguage() || 'pl';
+    this.translationService.currentLanguage$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(l => (this.lang = l));
+
+    this.loadCmsSections();
     this.loadServices();
     this.loadGallery();
     this.loadReviews();
@@ -1842,18 +1889,50 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.translationService.translate(key);
   }
 
-  /** Translate a service name with fallback to the raw DB value. */
+  /** Translate a service name with fallback chain:
+   *  1) DB localized translation (preferred — tłumaczenia z panelu admina),
+   *  2) statyczna mapa w translation.service (legacy),
+   *  3) wartość angielska / pierwsza dostępna.
+   */
   translateServiceName(service: Service): string {
-    const key = `service.name.${service.name}`;
+    const dbVal = this.pickServiceLocalized(service.name);
+    if (dbVal && this.isEffectiveLangValue(service.name)) return dbVal;
+    const fallback = this.serviceEnglishKey(service.name);
+    if (!fallback) return dbVal || '';
+    const key = `service.name.${fallback}`;
     const t = this.translationService.translate(key);
-    return t === key ? service.name : t;
+    return t === key ? (dbVal || fallback) : t;
   }
 
-  /** Translate a service description with fallback to the raw DB value. */
+  /** Translate a service description with the same fallback chain. */
   translateServiceDescription(service: Service): string {
-    const key = `service.desc.${service.name}`;
+    const dbVal = this.pickServiceLocalized(service.description);
+    if (dbVal && this.isEffectiveLangValue(service.description)) return dbVal;
+    const fallback = this.serviceEnglishKey(service.name);
+    if (!fallback) return dbVal || '';
+    const key = `service.desc.${fallback}`;
     const t = this.translationService.translate(key);
-    return t === key ? service.description : t;
+    return t === key ? (dbVal || (typeof service.description === 'string' ? service.description : '')) : t;
+  }
+
+  /** Pick a localized service field with PL → current → EN → FI fallback. */
+  private pickServiceLocalized(v: string | { [lang: string]: string } | null | undefined): string {
+    if (!v) return '';
+    if (typeof v === 'string') return v;
+    return v[this.lang] || v['pl'] || v['en'] || v['fi'] || Object.values(v)[0] || '';
+  }
+
+  /** True jeśli pole jest obiektem i ma wpis w aktywnym języku (czyli admin uzupełnił PL). */
+  private isEffectiveLangValue(v: string | { [lang: string]: string } | null | undefined): boolean {
+    if (!v || typeof v === 'string') return false;
+    return !!(v[this.lang] && v[this.lang].trim());
+  }
+
+  /** Get the original English-name (key for the legacy translation map). */
+  private serviceEnglishKey(name: string | { [lang: string]: string } | null | undefined): string {
+    if (!name) return '';
+    if (typeof name === 'string') return name;
+    return name['en'] || name['pl'] || name['fi'] || Object.values(name)[0] || '';
   }
 
   /** Translate a category label with fallback to the raw value. */
@@ -1961,7 +2040,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.services.filter(s => s.category === category);
   }
 
-  getServiceImage(name: string): string | null {
+  getServiceImage(service: Service): string | null {
+    const name = this.serviceEnglishKey(service.name);
     const images: { [key: string]: string } = {
       'Kobido Facelifting Massage': 'assets/images/_MG_1327.jpg',
       'Head Spa Classic Ritual': 'assets/images/_MG_0275.jpg',
@@ -1969,6 +2049,91 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
       'VIP Head Spa Ritual': 'assets/images/_MG_0453.jpg',
     };
     return images[name] || null;
+  }
+
+  /* ----------------------- CMS (page_sections) ----------------------- */
+
+  private loadCmsSections(): void {
+    this.apiService.getPageSections('home').subscribe({
+      next: (data) => {
+        const map: Record<string, PageSection> = {};
+        for (const s of data || []) map[s.section_key] = s;
+        this.cms = map;
+
+        // Hero slider — jeśli admin wgrał własną listę slajdów, używamy jej.
+        const heroSlides = this.cmsMetaArray('hero', 'slides');
+        if (heroSlides && heroSlides.length) {
+          this.heroSlides = heroSlides;
+          this.currentSlide = 0;
+        }
+      },
+      error: (err) => console.error('Failed to load home page sections:', err),
+    });
+  }
+
+  /** Zwraca title sekcji z bazy lub fallback z translation.service. */
+  cmsTitle(sectionKey: string, fallbackTranslateKey?: string): string {
+    const s = this.cms[sectionKey];
+    const v = s ? this.content.pickString(s.title, this.lang) : '';
+    return v || (fallbackTranslateKey ? this.translate(fallbackTranslateKey) : '');
+  }
+
+  cmsSubtitle(sectionKey: string, fallbackTranslateKey?: string): string {
+    const s = this.cms[sectionKey];
+    const v = s ? this.content.pickString(s.subtitle, this.lang) : '';
+    return v || (fallbackTranslateKey ? this.translate(fallbackTranslateKey) : '');
+  }
+
+  cmsBody(sectionKey: string, fallbackTranslateKey?: string): string {
+    const s = this.cms[sectionKey];
+    const v = s ? this.content.pickString(s.body, this.lang) : '';
+    return v || (fallbackTranslateKey ? this.translate(fallbackTranslateKey) : '');
+  }
+
+  /** Wartość tekstowa z `meta` (np. 'cta_url'). */
+  cmsMetaString(sectionKey: string, metaKey: string, fallback = ''): string {
+    const s = this.cms[sectionKey];
+    const v = s?.meta?.[metaKey];
+    return typeof v === 'string' && v.length ? v : fallback;
+  }
+
+  /** Tablica z `meta` (np. 'slides'). */
+  cmsMetaArray(sectionKey: string, metaKey: string): string[] | null {
+    const s = this.cms[sectionKey];
+    const v = s?.meta?.[metaKey];
+    return Array.isArray(v) ? v : null;
+  }
+
+  /** Etykieta CTA z meta (`cta_label_pl|en|fi`) z fallbackiem do tłumaczenia. */
+  cmsCtaLabel(sectionKey: string, fallbackTranslateKey?: string, prefix = 'cta_label'): string {
+    const s = this.cms[sectionKey];
+    const m: any = s?.meta || {};
+    const v = m[`${prefix}_${this.lang}`] || m[`${prefix}_pl`] || m[`${prefix}_en`] || m[`${prefix}_fi`];
+    return v || (fallbackTranslateKey ? this.translate(fallbackTranslateKey) : '');
+  }
+
+  /** Lokalizowana zawartość `content` (np. items dla sekcji 'how-it-works'). */
+  cmsContent<T = any>(sectionKey: string): T | null {
+    const s = this.cms[sectionKey];
+    return s ? (this.content.pickAny<T>(s.content as any, this.lang)) : null;
+  }
+
+  /** Kroki wizyty (sekcja 'how-it-works'). Domyślnie używa fallback z translation.service. */
+  cmsSteps(): Array<{ icon: string; title: string; desc: string }> {
+    const c = this.cmsContent<{ items?: Array<{ icon: string; title: string; desc: string }> }>('how-it-works');
+    return Array.isArray(c?.items) ? c!.items! : [];
+  }
+
+  /** Ścieżka obrazka sekcji z fallbackiem do statycznego asset-a. */
+  cmsImage(sectionKey: string, fallback: string): string {
+    const s = this.cms[sectionKey];
+    return s?.image_url ? this.content.resolveImage(s.image_url) : fallback;
+  }
+
+  /** True gdy w bazie istnieje niepusta wartość body dla tej sekcji. */
+  cmsHasBody(sectionKey: string): boolean {
+    const s = this.cms[sectionKey];
+    return !!(s && this.content.pickString(s.body, this.lang).trim());
   }
 
   private loadServices(): void {

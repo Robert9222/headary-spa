@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = 'http://localhost:8000/api';
+  private apiUrl = 'https://headaryspa.motivogroup.pl/api';
 
   constructor(private http: HttpClient) {}
 
@@ -118,6 +118,10 @@ export class ApiService {
    getPackage(id: number): Observable<any> {
      return this.get(`packages/${id}`);
    }
+
+   createPackage(data: any): Observable<any> { return this.post('packages', data); }
+   updatePackage(id: number, data: any): Observable<any> { return this.put(`packages/${id}`, data); }
+   deletePackage(id: number): Observable<any> { return this.delete(`packages/${id}`); }
 
    // Appointments endpoints
    createAppointment(appointment: any): Observable<any> {

@@ -17,9 +17,15 @@ class ServiceController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|unique:services',
+            'name' => 'required',
+            'name.pl' => 'nullable|string',
+            'name.en' => 'nullable|string',
+            'name.fi' => 'nullable|string',
             'category' => 'nullable|string',
-            'description' => 'nullable|string',
+            'description' => 'nullable',
+            'description.pl' => 'nullable|string',
+            'description.en' => 'nullable|string',
+            'description.fi' => 'nullable|string',
             'duration_minutes' => 'required|integer|min:1',
             'price' => 'required|numeric|min:0',
             'image_url' => 'nullable|string',
@@ -28,7 +34,7 @@ class ServiceController extends Controller
         ]);
 
         $service = Service::create($validated);
-        return response()->json($service, 201);
+        return response()->json($this->formatService($service->fresh()), 201);
     }
 
     public function show(Service $service)
@@ -39,9 +45,15 @@ class ServiceController extends Controller
     public function update(Request $request, Service $service)
     {
         $validated = $request->validate([
-            'name' => 'sometimes|unique:services,name,' . $service->id,
+            'name' => 'sometimes',
+            'name.pl' => 'nullable|string',
+            'name.en' => 'nullable|string',
+            'name.fi' => 'nullable|string',
             'category' => 'nullable|string',
-            'description' => 'nullable|string',
+            'description' => 'nullable',
+            'description.pl' => 'nullable|string',
+            'description.en' => 'nullable|string',
+            'description.fi' => 'nullable|string',
             'duration_minutes' => 'sometimes|integer|min:1',
             'price' => 'sometimes|numeric|min:0',
             'image_url' => 'nullable|string',
@@ -50,7 +62,7 @@ class ServiceController extends Controller
         ]);
 
         $service->update($validated);
-        return response()->json($service);
+        return response()->json($this->formatService($service->fresh()));
     }
 
     public function destroy(Service $service)
@@ -62,8 +74,9 @@ class ServiceController extends Controller
     private function formatService(Service $service): array
     {
         $data = $service->toArray();
-        $data['name'] = $service->name;
-        $data['description'] = $service->description;
+        // Zwracamy wszystkie tłumaczenia jako obiekt, żeby panel admina mógł je edytować.
+        $data['name'] = $service->getTranslations('name');
+        $data['description'] = $service->getTranslations('description');
         return $data;
     }
 }

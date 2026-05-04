@@ -11,6 +11,7 @@ interface StatCard {
   link: string;
   icon: string;
   accent?: string;
+  sub?: string;
 }
 
 @Component({
@@ -25,7 +26,7 @@ interface StatCard {
       </div>
     </div>
 
-    <div class="grid cols-4" style="margin-bottom: 2rem;">
+    <div class="grid cols-3" style="margin-bottom: 2rem;">
       <a *ngFor="let s of stats" [routerLink]="s.link" class="stat-card" [style.--accent]="s.accent">
         <div class="icon">{{ s.icon }}</div>
         <div class="meta">
@@ -102,6 +103,7 @@ interface StatCard {
     .stat-card .meta { display: flex; flex-direction: column; }
     .stat-card .label { color: #8a817a; font-size: 0.82rem; font-weight: 500; }
     .stat-card .value { font-size: 1.9rem; font-weight: 700; font-family: 'Playfair Display', Georgia, serif; color: #2d2a26; }
+    .stat-card .sub { color: #8a817a; font-size: 0.74rem; margin-top: 0.1rem; }
 
     .quick-actions { display: flex; flex-direction: column; gap: 0.5rem; }
     .action {
@@ -135,10 +137,9 @@ export class AdminDashboardComponent implements OnInit {
   loading = true;
   stats: StatCard[] = [
     { label: 'Usługi', value: 0, link: '/admin/services', icon: '✿', accent: '#C9A96E' },
-    { label: 'Galeria', value: 0, link: '/admin/gallery', icon: '▣', accent: '#7b9e89' },
     { label: 'Zespół', value: 0, link: '/admin/employees', icon: '☺', accent: '#a37ab5' },
+    { label: 'Galeria', value: 0, link: '/admin/gallery', icon: '▣', accent: '#6a9bbf' },
     { label: 'Opinie', value: 0, link: '/admin/reviews', icon: '★', accent: '#c96e8c' },
-    { label: 'Ustawienia', value: '⚙', link: '/admin/settings', icon: '⚙', accent: '#8a817a' },
   ];
   recentReviews: any[] = [];
 
@@ -150,11 +151,20 @@ export class AdminDashboardComponent implements OnInit {
       reviews: this.api.getReviews(),
     }).subscribe({
       next: (r: any) => {
+        // Stats: services, employees, gallery, reviews
         this.stats[0].value = r.services?.length ?? 0;
-        this.stats[1].value = r.gallery?.length ?? 0;
-        this.stats[2].value = r.employees?.length ?? 0;
-        this.stats[3].value = r.reviews?.length ?? 0;
-        this.recentReviews = (r.reviews || []).slice(0, 5);
+        this.stats[1].value = r.employees?.length ?? 0;
+        this.stats[2].value = r.gallery?.length ?? 0;
+
+        const reviews: any[] = r.reviews || [];
+        const pendingReviews = reviews.filter(rv => !rv.is_approved).length;
+        this.stats[3].value = reviews.length;
+        this.stats[3].sub = pendingReviews ? `${pendingReviews} do moderacji` : '';
+
+        this.recentReviews = [...reviews]
+          .sort((a, b) => (b.id || 0) - (a.id || 0))
+          .slice(0, 5);
+
         this.loading = false;
       },
       error: () => { this.loading = false; },

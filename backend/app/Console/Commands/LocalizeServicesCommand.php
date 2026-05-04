@@ -1,16 +1,85 @@
 <?php
 
-namespace Database\Seeders;
+namespace App\Console\Commands;
 
 use App\Models\Service;
-use Illuminate\Database\Seeder;
+use Illuminate\Console\Command;
 
-class ServiceSeeder extends Seeder
+/**
+ * One-off helper that ensures the four default head spa services exist in the
+ * database with full PL/EN/FI translations. Use it after upgrading the
+ * application so the admin panel shows Polish content (instead of seed-time
+ * English only) without having to wipe and re-seed the whole database.
+ *
+ * Matching strategy: we look up each service by any existing translation of
+ * its English name. If found, we overwrite name/description/category with the
+ * translated arrays. If not found, we create a new row.
+ *
+ * Usage:
+ *   php artisan services:localize-pl           # update / insert defaults
+ *   php artisan services:localize-pl --force   # overwrite even if PL already set
+ */
+class LocalizeServicesCommand extends Command
 {
-    public function run(): void
+    protected $signature = 'services:localize-pl {--force : Overwrite even if a Polish translation is already present}';
+
+    protected $description = 'Backfill PL/EN/FI translations for the default head spa services.';
+
+    public function handle(): int
     {
-        $services = [
+        $force = (bool) $this->option('force');
+        $defaults = $this->defaults();
+
+        foreach ($defaults as $def) {
+            $service = $this->findExisting($def['match']);
+
+            if ($service) {
+                $hasPl = trim((string) $service->getTranslation('name', 'pl', false)) !== '';
+                if ($hasPl && !$force) {
+                    $this->line("• Pomijam (PL już istnieje): " . $def['name']['pl']);
+                    continue;
+                }
+                $service->setTranslations('name', $def['name']);
+                $service->setTranslations('description', $def['description']);
+                $service->category = $def['category'];
+                $service->save();
+                $this->info("✓ Zaktualizowano: " . $def['name']['pl']);
+            } else {
+                Service::create([
+                    'name' => $def['name'],
+                    'description' => $def['description'],
+                    'category' => $def['category'],
+                    'price' => $def['price'],
+                    'duration_minutes' => $def['duration_minutes'],
+                    'image_url' => $def['image_url'],
+                    'is_active' => true,
+                    'order' => $def['order'],
+                ]);
+                $this->info("+ Utworzono: " . $def['name']['pl']);
+            }
+        }
+
+        return self::SUCCESS;
+    }
+
+    private function findExisting(array $matchNames): ?Service
+    {
+        foreach (Service::all() as $s) {
+            foreach (['pl', 'en', 'fi'] as $lang) {
+                $val = trim((string) $s->getTranslation('name', $lang, false));
+                if ($val !== '' && in_array($val, $matchNames, true)) {
+                    return $s;
+                }
+            }
+        }
+        return null;
+    }
+
+    private function defaults(): array
+    {
+        return [
             [
+                'match' => ['Head Spa Classic Ritual', 'Head Spa Classic – Rytuał Klasyczny'],
                 'name' => [
                     'pl' => 'Head Spa Classic – Rytuał Klasyczny',
                     'en' => 'Head Spa Classic Ritual',
@@ -25,10 +94,10 @@ class ServiceSeeder extends Seeder
                 'price' => 99.00,
                 'duration_minutes' => 90,
                 'image_url' => 'assets/images/_MG_0275.jpg',
-                'is_active' => true,
                 'order' => 1,
             ],
             [
+                'match' => ['Head Spa Classic & Face', 'Head Spa Classic & Twarz', 'Head Spa Classic z masażem twarzy'],
                 'name' => [
                     'pl' => 'Head Spa Classic z masażem twarzy',
                     'en' => 'Head Spa Classic with Facial',
@@ -43,10 +112,10 @@ class ServiceSeeder extends Seeder
                 'price' => 109.00,
                 'duration_minutes' => 105,
                 'image_url' => 'assets/images/_MG_1387.jpg',
-                'is_active' => true,
                 'order' => 2,
             ],
             [
+                'match' => ['VIP Head Spa Ritual', 'VIP Head Spa – Rytuał Premium'],
                 'name' => [
                     'pl' => 'VIP Head Spa – Rytuał Premium',
                     'en' => 'VIP Head Spa Ritual',
@@ -61,10 +130,10 @@ class ServiceSeeder extends Seeder
                 'price' => 129.00,
                 'duration_minutes' => 120,
                 'image_url' => 'assets/images/_MG_0453.jpg',
-                'is_active' => true,
                 'order' => 3,
             ],
             [
+                'match' => ['Kobido Facelifting Massage', 'Kobido – Japoński masaż liftingujący twarzy'],
                 'name' => [
                     'pl' => 'Kobido – Japoński masaż liftingujący twarzy',
                     'en' => 'Kobido Facelifting Massage',
@@ -74,19 +143,14 @@ class ServiceSeeder extends Seeder
                 'description' => [
                     'pl' => 'Kobido to wyjątkowy japoński masaż twarzy uznawany za jeden z najbardziej zaawansowanych manualnych zabiegów na świecie. Łączy intensywne techniki liftingujące, głęboki relaks oraz precyzyjną pracę na mięśniach, dzięki czemu naturalnie odmładza rysy twarzy, poprawia jędrność skóry i przywraca zdrowy blask. Ta wielopoziomowa terapia nie tylko wygładza zmarszczki i modeluje owal twarzy, ale także uwalnia głębokie napięcia mięśniowe, redukuje stres i wspiera drenaż limfatyczny – łącząc efekty estetyczne z pełną regeneracją organizmu. Każda sesja Kobido jest indywidualnie dopasowana do potrzeb skóry i mięśni. Sesja Kobido obejmuje: ➡️ Uwolnienie głębokich napięć mięśniowych ➡️ Manualny drenaż limfatyczny wspomagający detoks i krążenie ➡️ Intensywny masaż liftingujący modelujący i ujędrniający twarz ➡️ Elementy relaksacyjne redukujące stres i napięcie emocjonalne. 🕛 Każda sesja trwa od 60 do 90 minut.',
                     'en' => 'Kobido is a unique Japanese facial massage, considered one of the most advanced manual facial treatments in the world. By combining intensive lifting techniques, deep relaxation, and precise muscle work, Kobido naturally rejuvenates facial features, improves skin firmness, and restores a healthy glow. This multi-level therapy not only smooths wrinkles and defines the facial contour, but also releases deep muscular tension, reduces stress, and supports lymphatic drainage - combining aesthetic results with full-body regeneration. Each Kobido session is individually tailored to your skin and muscle needs. A Kobido session includes: ➡️ Deep muscle tension release ➡️ Manual lymphatic drainage to support detoxification and circulation ➡️ Intensive lifting massage to sculpt and firm the face ➡️ Relaxation elements to reduce stress and emotional tension. 🕛 Each session lasts approximately 60 to 90 minutes.',
-                    'fi' => 'Kobido on ainutlaatuinen japanilainen kasvohieronta, jota pidetään yhtenä maailman edistyneimmistä manuaalisista kasvohoidoista. Yhdistämällä intensiivisiä kohotustekniikoita, syvää rentoutusta ja tarkkaa lihastyötä Kobido nuorentaa kasvonpiirteitä luonnollisesti, parantaa ihon kiinteyttä ja palauttaa terveen hehkun. Tämä monitasoinen hoito silottaa ryppyjä, muotoilee kasvojen ääriviivoja, vapauttaa lihasjännityksiä, vähentää stressiä ja tukee imunestekiertoa. Jokainen Kobido-hoito räätälöidään yksilöllisesti. 🕛 Kesto noin 60–90 minuuttia.',
+                    'fi' => 'Kobido on ainutlaatuinen japanilainen kasvohieronta, jota pidetään yhtenä maailman edistyneimmistä manuaalisista kasvohoidoista. Yhdistämällä intensiivisiä kohotustekniikoita, syvää rentoutusta ja tarkkaa lihastyötä Kobido nuorentaa kasvonpiirteitä luonnollisesti, parantaa ihon kiinteyttä ja palauttaa terveen hehkun. 🕛 Kesto noin 60–90 minuuttia.',
                 ],
                 'price' => 69.00,
                 'duration_minutes' => 75,
                 'image_url' => 'assets/images/_MG_1327.jpg',
-                'is_active' => true,
                 'order' => 4,
             ],
         ];
-
-        foreach ($services as $service) {
-            Service::create($service);
-        }
     }
 }
 

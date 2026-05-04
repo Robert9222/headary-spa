@@ -54,6 +54,8 @@ interface EditableSection {
 const LANGS: LangKey[] = ['pl', 'en', 'fi'];const TYPES: { key: string; label: string }[] = [
   { key: 'hero', label: 'Hero (nagłówek z tłem)' },
   { key: 'rich-text', label: 'Tekst (markdown)' },
+  { key: 'image-text', label: 'Obraz + tekst (np. „o mnie")' },
+  { key: 'steps', label: 'Kroki (ikona + tytuł + opis)' },
   { key: 'two-column-lists', label: 'Dwie kolumny z listami' },
   { key: 'list', label: 'Lista (check / prep)' },
   { key: 'warning-list', label: 'Lista ostrzeżeń (z zagnieżdżeniem)' },
@@ -126,7 +128,7 @@ const LANGS: LangKey[] = ['pl', 'en', 'fi'];const TYPES: { key: string; label: s
           </div>
 
           <!-- Image upload (hero, or any section that may use one) -->
-          <div class="row image-row" *ngIf="s.type === 'hero'">
+          <div class="row image-row" *ngIf="s.type === 'hero' || s.type === 'image-text'">
             <div class="image-preview" *ngIf="s.image_url">
               <img [src]="content.resolveImage(s.image_url)" alt="preview">
             </div>
@@ -260,17 +262,42 @@ const LANGS: LangKey[] = ['pl', 'en', 'fi'];const TYPES: { key: string; label: s
                 <div *ngSwitchCase="'warning-list'" class="sub-card">
                   <h4>Lista ostrzeżeń ({{ l.toUpperCase() }})</h4>
                   <p class="hint">
-                    Każda linia = jeden punkt. Aby dodać podpunkt do poprzedniego, poprzedź linię <code>- </code> (myślnik + spacja).
-                    Przykład:<br>
-                    <code>zabiegi medycyny estetycznej:<br>- kwas hialuronowy (3 mies.)<br>- botoks (2 tyg.)</code>
+                    Dodawaj punkty przyciskiem „<strong>+ Punkt</strong>". Pod każdym punktem możesz dopisać podpunkty
+                    przyciskiem „<strong>+ Podpunkt</strong>" (np. listę zabiegów z czasem oczekiwania).
                   </p>
-                  <label class="full">
-                    <span>Punkty</span>
-                    <textarea rows="12"
-                              [ngModel]="warningItemsToText(getCF(s, l, 'items'))"
-                              (ngModelChange)="setCF(s, l, 'items', textToWarningItems($event))"></textarea>
-                  </label>
-                  <label class="full">
+
+                  <div class="warn-list">
+                    <div class="warn-item" *ngFor="let it of getWarningItems(s, l); let i = index">
+                      <div class="warn-row">
+                        <span class="warn-bullet" title="Punkt nadrzędny">⚠</span>
+                        <input class="warn-text"
+                               [ngModel]="it.text"
+                               (ngModelChange)="updateWarningItemText(s, l, i, $event)"
+                               placeholder="Treść punktu (np. „ostre stany zapalne")" />
+                        <button type="button" class="icon-btn" (click)="moveWarningItem(s, l, i, -1)"
+                                [disabled]="i === 0" title="W górę">↑</button>
+                        <button type="button" class="icon-btn" (click)="moveWarningItem(s, l, i, 1)"
+                                [disabled]="i === getWarningItems(s, l).length - 1" title="W dół">↓</button>
+                        <button type="button" class="icon-btn danger" (click)="removeWarningItem(s, l, i)" title="Usuń punkt">✕</button>
+                      </div>
+
+                      <div class="warn-children">
+                        <div class="warn-child-row" *ngFor="let ch of (it.children || []); let j = index">
+                          <span class="warn-sub-bullet">↳</span>
+                          <input class="warn-text"
+                                 [ngModel]="ch"
+                                 (ngModelChange)="updateWarningChild(s, l, i, j, $event)"
+                                 placeholder="Podpunkt (np. „kwas hialuronowy (ok. 3 miesiące)")" />
+                          <button type="button" class="icon-btn danger" (click)="removeWarningChild(s, l, i, j)" title="Usuń podpunkt">✕</button>
+                        </div>
+                        <button type="button" class="btn ghost xs" (click)="addWarningChild(s, l, i)">+ Podpunkt</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="button" class="btn ghost sm" (click)="addWarningItem(s, l)" style="margin-top: 0.6rem;">+ Punkt</button>
+
+                  <label class="full" style="margin-top: 1rem;">
                     <span>Stopka (markdown)</span>
                     <textarea rows="2"
                               [ngModel]="getCF(s, l, 'footer')"
@@ -322,6 +349,31 @@ const LANGS: LangKey[] = ['pl', 'en', 'fi'];const TYPES: { key: string; label: s
                              (ngModelChange)="setMeta(s, 'secondary_url', $event)" />
                     </label>
                   </div>
+                </div>
+
+                <!-- steps -->
+                <div *ngSwitchCase="'steps'" class="sub-card">
+                  <h4>Kroki ({{ l.toUpperCase() }})</h4>
+                  <p class="hint">Każdy krok to ikona/emoji + krótki tytuł + opis. Dodawaj wiersze przyciskiem poniżej.</p>
+                  <div class="steps-list">
+                    <div class="step-row" *ngFor="let st of getStepsArray(s, l); let i = index">
+                      <input class="step-icon" [ngModel]="st.icon"
+                             (ngModelChange)="updateStep(s, l, i, 'icon', $event)" placeholder="📅" />
+                      <input class="step-title" [ngModel]="st.title"
+                             (ngModelChange)="updateStep(s, l, i, 'title', $event)" placeholder="Tytuł kroku" />
+                      <input class="step-desc" [ngModel]="st.desc"
+                             (ngModelChange)="updateStep(s, l, i, 'desc', $event)" placeholder="Krótki opis" />
+                      <button type="button" class="icon-btn danger" (click)="removeStep(s, l, i)" title="Usuń">✕</button>
+                    </div>
+                  </div>
+                  <button type="button" class="btn ghost sm" (click)="addStep(s, l)" style="margin-top: 0.5rem;">+ Dodaj krok</button>
+                </div>
+
+                <!-- image-text (just uses image_url + body — no extra fields needed) -->
+                <div *ngSwitchCase="'image-text'" class="sub-card">
+                  <h4>Obraz + tekst</h4>
+                  <p class="hint">Ten typ używa pola „Treść" (markdown) powyżej oraz zdjęcia z górnej sekcji.
+                    Tekst wyrenderuje się obok obrazka na froncie.</p>
                 </div>
 
               </ng-container>
@@ -517,6 +569,48 @@ const LANGS: LangKey[] = ['pl', 'en', 'fi'];const TYPES: { key: string; label: s
     .sub-card h4 { margin: 0 0 0.8rem; color: var(--primary-color, #2d2a26); font-size: 0.95rem; }
     .meta-row { margin-top: 0.5rem; }
     .hint { color: #888; font-size: 0.8rem; line-height: 1.5; margin: 0 0 0.8rem; }
+
+    /* steps editor */
+    .steps-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .step-row { display: grid; grid-template-columns: 60px 1fr 2fr auto; gap: 0.5rem; align-items: center; }
+    .step-row input { padding: 0.5rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
+    .step-row .step-icon { text-align: center; font-size: 1.05rem; }
+    @media (max-width: 700px) { .step-row { grid-template-columns: 60px 1fr auto; } .step-row .step-desc { grid-column: 1 / -1; } }
+
+    /* ---------- warning-list editor ---------- */
+    .warn-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .warn-item {
+      background: #fdfbf6;
+      border: 1px solid #ebe6dd;
+      border-radius: 8px;
+      padding: 0.6rem 0.7rem;
+    }
+    .warn-row { display: grid; grid-template-columns: 28px 1fr auto auto auto; gap: 0.4rem; align-items: center; }
+    .warn-bullet { font-size: 1rem; color: #c9a96e; text-align: center; }
+    .warn-text {
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #d8d3c9;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      width: 100%;
+      box-sizing: border-box;
+      background: #fff;
+    }
+    .warn-text:focus { outline: none; border-color: #c9a96e; box-shadow: 0 0 0 3px rgba(201,169,110,0.15); }
+    .warn-children {
+      margin-top: 0.5rem;
+      padding-left: 1.6rem;
+      border-left: 2px dashed #e2dccf;
+      display: flex; flex-direction: column; gap: 0.35rem;
+    }
+    .warn-child-row { display: grid; grid-template-columns: 24px 1fr auto; gap: 0.4rem; align-items: center; }
+    .warn-sub-bullet { color: #b3a98e; text-align: center; font-size: 0.95rem; }
+    .btn.xs { padding: 0.3rem 0.6rem; font-size: 0.8rem; align-self: flex-start; }
+    @media (max-width: 700px) {
+      .warn-row { grid-template-columns: 24px 1fr auto; }
+      .warn-row .icon-btn:nth-of-type(1),
+      .warn-row .icon-btn:nth-of-type(2) { display: none; }
+    }
 
     .card-actions { display: flex; gap: 0.6rem; margin-top: 1rem; }
     .btn { padding: 0.6rem 1.2rem; border-radius: 4px; border: 0; cursor: pointer; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: inline-block; }
@@ -908,9 +1002,113 @@ export class PageSectionsEditorComponent implements OnInit {
     if (type === 'hero') return 'Tagline';
     if (type === 'list') return 'Wprowadzenie (markdown)';
     if (type === 'rich-text') return 'Treść (markdown)';
+    if (type === 'image-text') return 'Treść obok obrazka (markdown)';
     if (type === 'two-column-lists') return 'Wprowadzenie (markdown)';
+    if (type === 'steps') return 'Wprowadzenie (markdown, opcjonalne)';
     if (type === 'cta') return 'Opis / zachęta';
     return 'Treść';
+  }
+
+  /* ---------- steps helpers (icon + title + desc per language) ---------- */
+  getStepsArray(s: EditableSection, lang: LangKey): Array<{ icon: string; title: string; desc: string }> {
+    const c = s.content[lang] || {};
+    const arr = Array.isArray(c.items) ? c.items : [];
+    return arr.map((it: any) => ({
+      icon: (it && it.icon) || '',
+      title: (it && it.title) || '',
+      desc: (it && it.desc) || '',
+    }));
+  }
+
+  addStep(s: EditableSection, lang: LangKey): void {
+    const arr = this.getStepsArray(s, lang);
+    arr.push({ icon: '✨', title: '', desc: '' });
+    this.setCF(s, lang, 'items', arr);
+  }
+
+  updateStep(s: EditableSection, lang: LangKey, index: number, field: 'icon' | 'title' | 'desc', value: string): void {
+    const arr = this.getStepsArray(s, lang);
+    if (!arr[index]) return;
+    arr[index] = { ...arr[index], [field]: value };
+    this.setCF(s, lang, 'items', arr);
+  }
+
+  removeStep(s: EditableSection, lang: LangKey, index: number): void {
+    const arr = this.getStepsArray(s, lang);
+    arr.splice(index, 1);
+    this.setCF(s, lang, 'items', arr);
+  }
+
+  /* ---------- warning-list helpers (structured editor) ---------- */
+  getWarningItems(s: EditableSection, lang: LangKey): Array<{ text: string; children: string[] }> {
+    const c = s.content[lang] || {};
+    const arr = Array.isArray(c.items) ? c.items : [];
+    return arr.map((it: any) => ({
+      text: (it && it.text) || '',
+      children: Array.isArray(it?.children) ? [...it.children] : [],
+    }));
+  }
+
+  private setWarningItems(s: EditableSection, lang: LangKey, arr: Array<{ text: string; children: string[] }>): void {
+    // Persist a clean shape (drop empty children arrays for cleaner JSON).
+    const clean = arr.map(it => {
+      const out: any = { text: it.text };
+      if (it.children && it.children.length) out.children = it.children;
+      return out;
+    });
+    this.setCF(s, lang, 'items', clean);
+  }
+
+  addWarningItem(s: EditableSection, lang: LangKey): void {
+    const arr = this.getWarningItems(s, lang);
+    arr.push({ text: '', children: [] });
+    this.setWarningItems(s, lang, arr);
+  }
+
+  updateWarningItemText(s: EditableSection, lang: LangKey, index: number, value: string): void {
+    const arr = this.getWarningItems(s, lang);
+    if (!arr[index]) return;
+    arr[index] = { ...arr[index], text: value };
+    this.setWarningItems(s, lang, arr);
+  }
+
+  removeWarningItem(s: EditableSection, lang: LangKey, index: number): void {
+    const arr = this.getWarningItems(s, lang);
+    arr.splice(index, 1);
+    this.setWarningItems(s, lang, arr);
+  }
+
+  moveWarningItem(s: EditableSection, lang: LangKey, index: number, dir: -1 | 1): void {
+    const arr = this.getWarningItems(s, lang);
+    const j = index + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[index], arr[j]] = [arr[j], arr[index]];
+    this.setWarningItems(s, lang, arr);
+  }
+
+  addWarningChild(s: EditableSection, lang: LangKey, index: number): void {
+    const arr = this.getWarningItems(s, lang);
+    if (!arr[index]) return;
+    arr[index] = { ...arr[index], children: [...(arr[index].children || []), ''] };
+    this.setWarningItems(s, lang, arr);
+  }
+
+  updateWarningChild(s: EditableSection, lang: LangKey, index: number, childIndex: number, value: string): void {
+    const arr = this.getWarningItems(s, lang);
+    if (!arr[index]) return;
+    const children = [...(arr[index].children || [])];
+    children[childIndex] = value;
+    arr[index] = { ...arr[index], children };
+    this.setWarningItems(s, lang, arr);
+  }
+
+  removeWarningChild(s: EditableSection, lang: LangKey, index: number, childIndex: number): void {
+    const arr = this.getWarningItems(s, lang);
+    if (!arr[index]) return;
+    const children = [...(arr[index].children || [])];
+    children.splice(childIndex, 1);
+    arr[index] = { ...arr[index], children };
+    this.setWarningItems(s, lang, arr);
   }
 
   /* Content field getter/setter for current lang */

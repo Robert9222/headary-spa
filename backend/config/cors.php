@@ -8,11 +8,17 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout'],
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:4200', 'http://localhost:3000'],
+    'allowed_origins' => array_values(array_filter([
+        'http://localhost:4200',
+        'http://localhost:3000',
+        'https://headaryspa.com',
+        'https://www.headaryspa.com',
+        env('FRONTEND_URL'),
+    ])),
 
     'allowed_origins_patterns' => [],
 

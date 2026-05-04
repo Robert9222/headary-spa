@@ -4,11 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '@services/api.service';
 import { ContentService } from '@services/content.service';
 
+type LangKey = 'pl' | 'en' | 'fi';
+const LANGS: LangKey[] = ['pl', 'en', 'fi'];
+
 interface AdminService {
   id?: number;
-  name: string;
+  name: { pl: string; en: string; fi: string };
   category: string;
-  description: string;
+  description: { pl: string; en: string; fi: string };
   duration_minutes: number;
   price: number;
   image_url: string;
@@ -16,6 +19,7 @@ interface AdminService {
   is_active: boolean;
   _saving?: boolean;
   _uploading?: boolean;
+  _activeLang?: LangKey;
 }
 
 @Component({
@@ -26,7 +30,7 @@ interface AdminService {
     <div class="page-head">
       <div>
         <h1>Usługi</h1>
-        <p class="lead">Definiuj ofertę salonu: nazwy, kategorie, ceny i czas trwania.</p>
+        <p class="lead">Definiuj ofertę salonu: nazwy, kategorie, ceny i czas trwania (PL / EN / FI).</p>
       </div>
       <div class="actions">
         <button class="btn primary" (click)="openCreate()">+ Nowa usługa</button>
@@ -52,7 +56,7 @@ interface AdminService {
           <thead>
             <tr>
               <th style="width: 80px;">Zdjęcie</th>
-              <th>Nazwa</th>
+              <th>Nazwa (PL)</th>
               <th>Kategoria</th>
               <th style="text-align:right;">Cena</th>
               <th>Czas</th>
@@ -67,8 +71,9 @@ interface AdminService {
                 <div *ngIf="!it.image_url" class="thumb" style="display:grid;place-items:center;color:#cbbfa8;">✿</div>
               </td>
               <td>
-                <strong>{{ it.name }}</strong>
-                <div style="color:#8a817a; font-size:0.8rem; margin-top:0.2rem;">{{ it.description | slice:0:80 }}{{ (it.description?.length || 0) > 80 ? '…' : '' }}</div>
+                <strong>{{ displayName(it) }}</strong>
+                <div *ngIf="!it.name.pl" style="color:#b58300; font-size:0.75rem; margin-top:0.2rem;">⚠ Brak tłumaczenia PL — wyświetla EN/FI</div>
+                <div style="color:#8a817a; font-size:0.8rem; margin-top:0.2rem;">{{ displayDesc(it) | slice:0:80 }}{{ (displayDesc(it)?.length || 0) > 80 ? '…' : '' }}</div>
               </td>
               <td><span class="badge muted" *ngIf="it.category">{{ it.category }}</span></td>
               <td style="text-align:right; font-weight:600;">{{ it.price }} zł</td>
@@ -110,11 +115,38 @@ interface AdminService {
             </div>
           </div>
 
-          <div class="form-grid cols-2" style="margin-top: 1rem;">
-            <div class="field full">
-              <label>Nazwa usługi *</label>
-              <input [(ngModel)]="editing.name" />
-            </div>
+          <!-- Language tabs for translatable fields -->
+          <div class="lang-tabs" style="display:flex; gap:0.4rem; margin: 1.25rem 0 0.75rem; border-bottom:1px solid #ebe6dd;">
+            <button type="button"
+                    *ngFor="let l of langs"
+                    class="lang-tab"
+                    [class.active]="(editing._activeLang || 'pl') === l"
+                    (click)="editing._activeLang = l"
+                    [style.font-weight]="(editing._activeLang || 'pl') === l ? 700 : 500"
+                    style="padding:0.5rem 1rem; background:transparent; border:none; border-bottom:2px solid transparent; cursor:pointer; color:#5a4a1f;"
+                    [style.borderBottomColor]="(editing._activeLang || 'pl') === l ? '#C9A96E' : 'transparent'">
+              {{ l.toUpperCase() }}
+              <span *ngIf="hasLang(editing, l)" style="color:#7b9e89; margin-left:0.25rem;">●</span>
+            </button>
+            <span style="margin-left:auto; color:#8a817a; font-size:0.8rem; align-self:center;">
+              Wpisz wszystkie języki, aby strona działała poprawnie w PL/EN/FI.
+            </span>
+          </div>
+
+          <div class="form-grid cols-2">
+            <ng-container *ngFor="let l of langs">
+              <ng-container *ngIf="(editing._activeLang || 'pl') === l">
+                <div class="field full">
+                  <label>Nazwa usługi ({{ l.toUpperCase() }}) {{ l === 'pl' ? '*' : '' }}</label>
+                  <input [(ngModel)]="editing.name[l]" />
+                </div>
+                <div class="field full">
+                  <label>Opis ({{ l.toUpperCase() }})</label>
+                  <textarea rows="4" [(ngModel)]="editing.description[l]"></textarea>
+                </div>
+              </ng-container>
+            </ng-container>
+
             <div class="field">
               <label>Kategoria</label>
               <input [(ngModel)]="editing.category" placeholder="np. masaż, zabieg na twarz" />
@@ -131,11 +163,7 @@ interface AdminService {
               <label>Czas trwania (min) *</label>
               <input type="number" [(ngModel)]="editing.duration_minutes" />
             </div>
-            <div class="field full">
-              <label>Opis</label>
-              <textarea rows="4" [(ngModel)]="editing.description"></textarea>
-            </div>
-            <label class="field checkbox">
+            <label class="field checkbox full">
               <input type="checkbox" [(ngModel)]="editing.is_active" />
               <span class="label">Aktywna (widoczna na stronie)</span>
             </label>
@@ -161,6 +189,7 @@ export class AdminServicesComponent implements OnInit {
   message = '';
   isError = false;
   editing: AdminService | null = null;
+  langs = LANGS;
 
   ngOnInit(): void { this.reload(); }
 
@@ -168,36 +197,69 @@ export class AdminServicesComponent implements OnInit {
     this.loading = true;
     this.api.getServices().subscribe({
       next: (data: any[]) => {
-        this.items = (data || []).map((x: any) => ({
-          id: x.id,
-          name: typeof x.name === 'object' ? (x.name.pl || x.name.en || '') : (x.name || ''),
-          category: x.category || '',
-          description: typeof x.description === 'object' ? (x.description.pl || x.description.en || '') : (x.description || ''),
-          duration_minutes: x.duration_minutes || 60,
-          price: +x.price || 0,
-          image_url: x.image_url || '',
-          order: x.order ?? 0,
-          is_active: !!x.is_active,
-        })).sort((a, b) => a.order - b.order);
+        this.items = (data || []).map((x: any) => this.normalize(x))
+          .sort((a, b) => a.order - b.order);
         this.loading = false;
       },
       error: () => { this.loading = false; this.showError('Nie udało się pobrać usług.'); }
     });
   }
 
-  openCreate(): void {
-    const maxOrder = this.items.reduce((m, i) => Math.max(m, i.order), 0);
-    this.editing = {
-      name: '', category: '', description: '', duration_minutes: 60,
-      price: 0, image_url: '', order: maxOrder + 1, is_active: true,
+  private normalize(x: any): AdminService {
+    const tl = (v: any) => {
+      if (v == null) return { pl: '', en: '', fi: '' };
+      if (typeof v === 'string') return { pl: '', en: v, fi: '' };
+      return { pl: v.pl || '', en: v.en || '', fi: v.fi || '' };
+    };
+    return {
+      id: x.id,
+      name: tl(x.name),
+      category: x.category || '',
+      description: tl(x.description),
+      duration_minutes: x.duration_minutes || 60,
+      price: +x.price || 0,
+      image_url: x.image_url || '',
+      order: x.order ?? 0,
+      is_active: !!x.is_active,
     };
   }
 
-  openEdit(it: AdminService): void { this.editing = { ...it }; }
+  /** Wyświetlana nazwa w liście — preferujemy PL, fallback do EN/FI. */
+  displayName(it: AdminService): string {
+    return it.name.pl || it.name.en || it.name.fi || '';
+  }
+
+  displayDesc(it: AdminService): string {
+    return it.description.pl || it.description.en || it.description.fi || '';
+  }
+
+  hasLang(it: AdminService, l: LangKey): boolean {
+    return !!(it.name[l]?.trim() || it.description[l]?.trim());
+  }
+
+  openCreate(): void {
+    const maxOrder = this.items.reduce((m, i) => Math.max(m, i.order), 0);
+    this.editing = {
+      name: { pl: '', en: '', fi: '' },
+      category: '',
+      description: { pl: '', en: '', fi: '' },
+      duration_minutes: 60,
+      price: 0,
+      image_url: '',
+      order: maxOrder + 1,
+      is_active: true,
+      _activeLang: 'pl',
+    };
+  }
+
+  openEdit(it: AdminService): void {
+    this.editing = { ...it, name: { ...it.name }, description: { ...it.description }, _activeLang: 'pl' };
+  }
 
   canSave(): boolean {
     if (!this.editing) return false;
-    return !!this.editing.name && this.editing.price >= 0 && this.editing.duration_minutes > 0;
+    const hasName = !!(this.editing.name.pl || this.editing.name.en || this.editing.name.fi);
+    return hasName && this.editing.price >= 0 && this.editing.duration_minutes > 0;
   }
 
   onFile(ev: Event): void {
@@ -221,10 +283,22 @@ export class AdminServicesComponent implements OnInit {
     if (!this.editing || !this.canSave()) return;
     const e = this.editing;
     e._saving = true;
-    const payload = {
-      name: e.name, category: e.category, description: e.description,
-      duration_minutes: e.duration_minutes, price: e.price,
-      image_url: e.image_url, order: e.order, is_active: e.is_active,
+    const cleanLocalized = (v: { pl: string; en: string; fi: string }) => {
+      const out: any = {};
+      if (v.pl?.trim()) out.pl = v.pl;
+      if (v.en?.trim()) out.en = v.en;
+      if (v.fi?.trim()) out.fi = v.fi;
+      return out;
+    };
+    const payload: any = {
+      name: cleanLocalized(e.name),
+      category: e.category,
+      description: cleanLocalized(e.description),
+      duration_minutes: e.duration_minutes,
+      price: e.price,
+      image_url: e.image_url,
+      order: e.order,
+      is_active: e.is_active,
     };
     const req = e.id ? this.api.updateService(e.id, payload) : this.api.createService(payload);
     req.subscribe({
@@ -235,7 +309,7 @@ export class AdminServicesComponent implements OnInit {
 
   remove(it: AdminService): void {
     if (!it.id) return;
-    if (!confirm(`Usunąć usługę „${it.name}"?`)) return;
+    if (!confirm(`Usunąć usługę „${this.displayName(it)}"?`)) return;
     this.api.deleteService(it.id).subscribe({
       next: () => { this.items = this.items.filter(x => x.id !== it.id); this.showOk('Usunięto.'); },
       error: () => this.showError('Błąd usuwania.'),

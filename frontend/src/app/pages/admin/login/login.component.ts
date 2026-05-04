@@ -42,10 +42,6 @@ import {AuthService} from "@services/auth.service";
         <div *ngIf="error" class="error-message">
           {{ error }}
         </div>
-
-        <p class="demo-creds">
-          Demo: admin&#64;headary-spa.local / admin123
-        </p>
       </div>
     </div>
   `,
@@ -145,17 +141,6 @@ import {AuthService} from "@services/auth.service";
       font-size: 0.9rem;
     }
 
-    .demo-creds {
-      text-align: center;
-      font-size: 0.82rem;
-      color: #8a817a;
-      margin: 1.8rem 0 0;
-      padding: 0.8rem;
-      background: #faf7f2;
-      border-radius: 8px;
-      line-height: 1.6;
-    }
-    .demo-creds strong { color: #5a524a; }
   `]
 })
 export class AdminLoginComponent {
