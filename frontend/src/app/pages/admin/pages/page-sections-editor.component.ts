@@ -273,7 +273,7 @@ const LANGS: LangKey[] = ['pl', 'en', 'fi'];const TYPES: { key: string; label: s
                         <input class="warn-text"
                                [ngModel]="it.text"
                                (ngModelChange)="updateWarningItemText(s, l, i, $event)"
-                               placeholder="Treść punktu (np. „ostre stany zapalne")" />
+                               placeholder="Treść punktu (np. „ostre stany zapalne”)" />
                         <button type="button" class="icon-btn" (click)="moveWarningItem(s, l, i, -1)"
                                 [disabled]="i === 0" title="W górę">↑</button>
                         <button type="button" class="icon-btn" (click)="moveWarningItem(s, l, i, 1)"
@@ -287,7 +287,7 @@ const LANGS: LangKey[] = ['pl', 'en', 'fi'];const TYPES: { key: string; label: s
                           <input class="warn-text"
                                  [ngModel]="ch"
                                  (ngModelChange)="updateWarningChild(s, l, i, j, $event)"
-                                 placeholder="Podpunkt (np. „kwas hialuronowy (ok. 3 miesiące)")" />
+                                 placeholder="Podpunkt (np. „kwas hialuronowy – ok. 3 miesiące”)" />
                           <button type="button" class="icon-btn danger" (click)="removeWarningChild(s, l, i, j)" title="Usuń podpunkt">✕</button>
                         </div>
                         <button type="button" class="btn ghost xs" (click)="addWarningChild(s, l, i)">+ Podpunkt</button>

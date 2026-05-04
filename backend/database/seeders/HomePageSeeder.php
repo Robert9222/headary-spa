@@ -44,7 +44,6 @@ class HomePageSeeder extends Seeder
                     'cta_url' => 'https://timma.no/salon/headary-spa',
                     'slides' => [
                         'assets/images/_MG_0013.jpg',
-                        'assets/images/_MG_0157.jpg',
                         'assets/images/_MG_0183.jpg',
                         'assets/images/_MG_1327.jpg',
                         'assets/images/_MG_0453.jpg',
