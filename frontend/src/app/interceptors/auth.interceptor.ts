@@ -3,14 +3,18 @@ import {
   HttpRequest,
   HttpHandler,
   HttpEvent,
-  HttpInterceptor
+  HttpInterceptor,
+  HttpErrorResponse
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { AuthService } from '../services/auth.service';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { Router } from '@angular/router';
+import {AuthService} from "@services/auth.service";
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
   private authService = inject(AuthService);
+  private router = inject(Router);
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = this.authService.getToken();
@@ -23,7 +27,21 @@ export class AuthInterceptor implements HttpInterceptor {
       });
     }
 
-    return next.handle(request);
+    return next.handle(request).pipe(
+      catchError((err: HttpErrorResponse) => {
+        // Token wygasł / nieprawidłowy / brak uprawnień — wyloguj i przekieruj.
+        // Pomijamy samą próbę logowania, żeby nie zapętlić.
+        const isAuthCall = request.url.includes('/auth/login');
+        if (!isAuthCall && (err.status === 401 || err.status === 419)) {
+          this.authService.clearSession();
+          if (!this.router.url.startsWith('/admin/login')) {
+            this.router.navigate(['/admin/login'], {
+              queryParams: { reason: 'session_expired' },
+            });
+          }
+        }
+        return throwError(() => err);
+      })
+    );
   }
 }
-

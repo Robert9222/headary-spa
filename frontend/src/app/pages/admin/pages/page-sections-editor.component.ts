@@ -45,6 +45,7 @@ interface EditableSection {
   _saving?: boolean;
   _expanded?: boolean;
   _uploading?: boolean;
+  _uploadingSlide?: boolean;
   _activeLang?: LangKey;
 
   _translating?: boolean;
@@ -319,6 +320,46 @@ const LANGS: LangKey[] = ['pl', 'en', 'fi'];const TYPES: { key: string; label: s
                       <input [ngModel]="s.meta['cta_url'] || ''"
                              (ngModelChange)="setMeta(s, 'cta_url', $event)" />
                     </label>
+                  </div>
+
+                  <!-- Slider zdjęć (wspólny dla wszystkich języków – pokazujemy raz, w zakładce PL) -->
+                  <div *ngIf="l === 'pl' && s.section_key === 'hero'" class="slides-block">
+                    <h4 style="margin-top: 1.2rem;">Slider zdjęć (strona główna)</h4>
+                    <p class="hint">
+                      Lista zdjęć wyświetlanych w sliderze hero. Pierwsze zdjęcie pokazuje się jako pierwsze.
+                      Jeśli lista jest pusta — używana jest domyślna galeria z assets.
+                    </p>
+
+                    <div class="slides-list">
+                      <div class="slide-row" *ngFor="let url of getSlides(s); let si = index">
+                        <div class="slide-thumb">
+                          <img *ngIf="url" [src]="content.resolveImage(url)" alt="slide {{ si + 1 }}" />
+                          <span *ngIf="!url" class="slide-thumb-empty">brak</span>
+                        </div>
+                        <input class="slide-url"
+                               [ngModel]="url"
+                               (ngModelChange)="updateSlideUrl(s, si, $event)"
+                               placeholder="assets/images/foo.jpg lub /storage/page-sections/..." />
+                        <button type="button" class="icon-btn" (click)="moveSlide(s, si, -1)"
+                                [disabled]="si === 0" title="W górę">↑</button>
+                        <button type="button" class="icon-btn" (click)="moveSlide(s, si, 1)"
+                                [disabled]="si === getSlides(s).length - 1" title="W dół">↓</button>
+                        <button type="button" class="icon-btn danger" (click)="removeSlide(s, si)" title="Usuń">✕</button>
+                      </div>
+                      <div *ngIf="getSlides(s).length === 0" class="slides-empty">
+                        Brak slajdów — używane są domyślne zdjęcia. Dodaj poniżej własne.
+                      </div>
+                    </div>
+
+                    <div class="slides-actions">
+                      <label class="btn ghost file-btn">
+                        {{ s._uploadingSlide ? 'Wysyłanie…' : '+ Wgraj nowe zdjęcie' }}
+                        <input type="file" accept="image/*"
+                               (change)="onSlideFileSelected($event, s)"
+                               [disabled]="!!s._uploadingSlide" hidden />
+                      </label>
+                      <button type="button" class="btn ghost" (click)="addSlideUrl(s)">+ Dodaj pusty wiersz (URL)</button>
+                    </div>
                   </div>
                 </div>
 
@@ -618,6 +659,49 @@ const LANGS: LangKey[] = ['pl', 'en', 'fi'];const TYPES: { key: string; label: s
     .btn.primary:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn.ghost { background: transparent; color: #555; border: 1px solid #ccc; }
     .file-btn { cursor: pointer; }
+
+    /* ---------- Hero slides editor ---------- */
+    .slides-block { margin-top: 0.5rem; }
+    .slides-list { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.4rem; }
+    .slide-row {
+      display: grid;
+      grid-template-columns: 70px 1fr auto auto auto;
+      gap: 0.5rem;
+      align-items: center;
+      background: #fff;
+      border: 1px solid #ebe6dd;
+      border-radius: 6px;
+      padding: 0.4rem 0.5rem;
+    }
+    .slide-thumb {
+      width: 70px; height: 48px;
+      overflow: hidden; border-radius: 4px;
+      background: #f0ece3;
+      display: grid; place-items: center;
+    }
+    .slide-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .slide-thumb-empty { color: #b3a98e; font-size: 0.75rem; }
+    .slide-url {
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #d8d3c9;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      width: 100%;
+      box-sizing: border-box;
+      font-family: 'Consolas', monospace;
+    }
+    .slide-url:focus { outline: none; border-color: #c9a96e; box-shadow: 0 0 0 3px rgba(201,169,110,0.15); }
+    .slides-empty {
+      color: #8a817a; font-size: 0.85rem; text-align: center;
+      padding: 0.8rem; background: #faf7f2;
+      border: 1px dashed #d8d3c9; border-radius: 6px;
+    }
+    .slides-actions { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.7rem; }
+    @media (max-width: 700px) {
+      .slide-row { grid-template-columns: 56px 1fr auto; }
+      .slide-row .icon-btn:nth-of-type(1),
+      .slide-row .icon-btn:nth-of-type(2) { display: none; }
+    }
 
     /* ---------- Translation modal ---------- */
     .tmodal-backdrop {
@@ -1201,6 +1285,67 @@ export class PageSectionsEditorComponent implements OnInit {
       },
       error: () => {
         s._uploading = false;
+        this.showError('Błąd uploadu zdjęcia.');
+      },
+    });
+  }
+
+  /* ---------- Hero slider helpers (meta.slides: string[]) ---------- */
+  getSlides(s: EditableSection): string[] {
+    const v = s.meta?.['slides'];
+    return Array.isArray(v) ? v : [];
+  }
+
+  private setSlides(s: EditableSection, slides: string[]) {
+    s.meta = { ...(s.meta || {}), slides: [...slides] };
+    this.markDirty(s);
+  }
+
+  addSlideUrl(s: EditableSection) {
+    const arr = this.getSlides(s);
+    arr.push('');
+    this.setSlides(s, arr);
+  }
+
+  updateSlideUrl(s: EditableSection, index: number, value: string) {
+    const arr = this.getSlides(s);
+    if (index < 0 || index >= arr.length) return;
+    arr[index] = value;
+    this.setSlides(s, arr);
+  }
+
+  removeSlide(s: EditableSection, index: number) {
+    const arr = this.getSlides(s);
+    arr.splice(index, 1);
+    this.setSlides(s, arr);
+  }
+
+  moveSlide(s: EditableSection, index: number, dir: -1 | 1) {
+    const arr = this.getSlides(s);
+    const j = index + dir;
+    if (j < 0 || j >= arr.length) return;
+    [arr[index], arr[j]] = [arr[j], arr[index]];
+    this.setSlides(s, arr);
+  }
+
+  onSlideFileSelected(event: Event, s: EditableSection) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    s._uploadingSlide = true;
+    this.api.uploadPageSectionImage(file).subscribe({
+      next: (res: any) => {
+        const arr = this.getSlides(s);
+        arr.push(res.image_url);
+        this.setSlides(s, arr);
+        s._uploadingSlide = false;
+        // reset input żeby ponowne wgranie tego samego pliku zadziałało
+        input.value = '';
+        this.showOk('Slajd dodany. Pamiętaj zapisać sekcję.');
+      },
+      error: () => {
+        s._uploadingSlide = false;
+        input.value = '';
         this.showError('Błąd uploadu zdjęcia.');
       },
     });

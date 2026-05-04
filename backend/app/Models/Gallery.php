@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesImageUrls;
 use Illuminate\Database\Eloquent\Model;
 
 class Gallery extends Model
 {
+    use NormalizesImageUrls;
+
     protected $table = 'gallery';
 
     protected $fillable = [

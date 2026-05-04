@@ -55,30 +55,36 @@ export class ContentService {
 
   /**
    * Resolve image URL.
-   * - `data:` / `blob:` / `assets/...` — zostawiamy bez zmian.
-   * - URL absolutny do produkcyjnej domeny: gdy jesteśmy lokalnie (localhost),
-   *   przepisujemy hosta na lokalny backend, żeby zdjęcia ładowały się w devie.
-   * - Ścieżki względne (`/storage/...` lub `storage/...`) — doklejamy bazę API.
+   * - `data:` / `blob:` — bez zmian.
+   * - URL absolutny (https?://...) — używamy w takiej formie, jaką dostaliśmy z API.
+   *   Dotyczy to też plików wgranych w panelu admina, które są hostowane na
+   *   produkcyjnym backendzie (`https://headaryspa.motivogroup.pl/storage/...`).
+   * - `assets/images/X.jpg|png` — zdjęcia projektowe; mapujemy na
+   *   `/storage/images/X.webp` (jedno źródło w backendzie, format WebP).
+   *   Dla innych assetów (svg, ico, fonts) zostawiamy jak są.
+   * - Ścieżki `/storage/.../X.jpg|png` — automatycznie podmieniamy rozszerzenie
+   *   na `.webp`, bo backend od teraz zapisuje wszystkie uploady w WebP,
+   *   a stara baza obrazów (`storage/app/public/images`) ma komplet `.webp`.
+   * - Ścieżki względne — doklejamy bazę API.
    */
   resolveImage(url: string | null | undefined): string {
     if (!url) return '';
     if (/^(data:|blob:)/i.test(url)) return url;
-    if (/^assets\//i.test(url)) return url;
 
-    const apiBase = this.getApiBase();
-
-    if (/^https?:\/\//i.test(url)) {
-      if (this.isLocalDev()) {
-        try {
-          const u = new URL(url);
-          if (u.hostname === 'headaryspa.motivogroup.pl' || u.hostname.endsWith('.motivogroup.pl')) {
-            return apiBase + u.pathname + u.search;
-          }
-        } catch { /* ignore parse errors */ }
-      }
+    // assets/images/X.jpg|png  ->  /storage/images/X.webp (jedno źródło)
+    const assetMatch = url.match(/^assets\/images\/(.+)\.(jpe?g|png)$/i);
+    if (assetMatch) {
+      url = `/storage/images/${assetMatch[1]}.webp`;
+    } else if (/^assets\//i.test(url)) {
+      // inne assety (svg, ikonki) zostawiamy jak są
       return url;
     }
 
+    if (/^https?:\/\//i.test(url)) {
+      return url;
+    }
+
+    const apiBase = this.getApiBase();
     return url.startsWith('/') ? `${apiBase}${url}` : `${apiBase}/${url}`;
   }
 

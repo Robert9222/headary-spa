@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesImageUrls;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
 class PageSection extends Model
 {
     use HasTranslations;
+    use NormalizesImageUrls;
 
     public $translatable = ['title', 'subtitle', 'body', 'content'];
 

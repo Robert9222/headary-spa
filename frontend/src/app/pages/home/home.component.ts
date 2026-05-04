@@ -21,7 +21,7 @@ import { takeUntil } from 'rxjs/operators';
           <div class="hero-slide" *ngFor="let slide of heroSlides; let i = index"
                [class.active]="i === currentSlide"
                [class.prev]="i === prevSlide">
-            <img [src]="slide" alt="Headary SPA">
+            <img [src]="content.resolveImage(slide)" alt="Headary SPA">
           </div>
         </div>
         <div class="hero-overlay">
@@ -142,17 +142,7 @@ import { takeUntil } from 'rxjs/operators';
         </div>
       </section>
 
-      <!-- Gallery Preview -->
-      <section class="gallery-preview animate-on-scroll" id="gallery" *ngIf="galleryItems.length > 0">
-        <div class="container">
-          <h2 class="section-title">{{ translate('gallery.title') }}</h2>
-          <div class="gallery-grid">
-            <div *ngFor="let item of galleryItems | slice:0:6" class="gallery-item">
-              <img [src]="item.image_url" [alt]="item.title">
-            </div>
-          </div>
-        </div>
-      </section>
+      <!-- Gallery preview removed (sekcja niepotrzebna na stronie głównej). -->
 
       <!-- Voucher Section -->
       <section class="voucher-section animate-on-scroll" id="voucher">
@@ -284,7 +274,7 @@ import { takeUntil } from 'rxjs/operators';
             <!-- Voucher Preview -->
             <div class="voucher-preview">
               <div class="voucher-card">
-                <img src="assets/images/_MG_0183.jpg" alt="Headary SPA" class="voucher-card-bg">
+                <img [src]="content.resolveImage('assets/images/_MG_0183.jpg')" alt="Headary SPA" class="voucher-card-bg">
                 <div class="voucher-card-overlay">
                   <h3>Headary SPA</h3>
                   <p class="voucher-card-for" *ngIf="voucherData.recipient_name">{{ translate('voucherForm.recipientName') }}: <strong>{{ voucherData.recipient_name }}</strong></p>
@@ -405,8 +395,9 @@ import { takeUntil } from 'rxjs/operators';
     /* Hero Section */
     .hero {
       position: relative;
-      height: 70vh;
-      min-height: 450px;
+      height: 72vh;
+      min-height: 480px;
+      max-height: 760px;
       overflow: hidden;
     }
 
@@ -441,6 +432,23 @@ import { takeUntil } from 'rxjs/operators';
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center center;
+      will-change: transform;
+      transform: scale(1.05);   /* spoczynkowe — lekko przybliżone, by nie pokazać brzegów */
+    }
+
+    /* Mocniejszy Ken Burns z wyraźniejszym oddaleniem na końcu */
+    .hero-slide.active img {
+      animation: heroKenBurns 8s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    }
+    @keyframes heroKenBurns {
+      0%   { transform: scale(1.45); }   /* mocne wjechanie */
+      25%  { transform: scale(1.22); }   /* szybkie zwolnienie */
+      100% { transform: scale(1.00); }   /* pełne oddalenie do końca */
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero-slide img { transform: scale(1.02); }
+      .hero-slide.active img { animation: none; }
     }
 
     .slider-dots {
@@ -473,7 +481,17 @@ import { takeUntil } from 'rxjs/operators';
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(139, 111, 71, 0.45);
+      background:
+        linear-gradient(90deg,
+          rgba(45, 38, 28, 0.62) 0%,
+          rgba(45, 38, 28, 0.42) 45%,
+          rgba(45, 38, 28, 0.18) 75%,
+          rgba(45, 38, 28, 0.05) 100%),
+        linear-gradient(180deg,
+          rgba(0, 0, 0, 0.18) 0%,
+          rgba(0, 0, 0, 0) 35%,
+          rgba(0, 0, 0, 0) 65%,
+          rgba(0, 0, 0, 0.28) 100%);
       display: flex;
       align-items: center;
       justify-content: flex-start;
@@ -1247,20 +1265,36 @@ import { takeUntil } from 'rxjs/operators';
       margin-bottom: 3rem;
     }
 
+    .footer-brand {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      line-height: 1;
+      gap: 0.15rem;
+    }
+
     .footer-brand h3 {
-      font-size: 1.8rem;
-      font-family: var(--font-secondary, 'Playfair Display', serif);
       margin: 0;
+      font-family: 'Noto Serif Display', 'DM Serif Display', 'Cormorant Garamond', Georgia, serif;
+      font-stretch: 62.5%; /* ExtraCondensed — jak w logo w headerze */
+      font-size: 2.6rem;
+      font-weight: 300;
       color: white;
-      font-weight: 400;
-      letter-spacing: 2px;
+      letter-spacing: 0.5px;
+      line-height: 1;
+      font-feature-settings: "liga", "dlig";
     }
 
     .footer-spa {
-      font-size: 0.8rem;
-      letter-spacing: 3px;
-      color: rgba(255,255,255,0.7);
       margin: 0 0 1rem 0;
+      font-family: 'Noto Serif Display', 'DM Serif Display', 'Cormorant Garamond', Georgia, serif;
+      font-stretch: 62.5%;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.75);
+      letter-spacing: 8px;
+      text-indent: 8px; /* kompensacja letter-spacing */
+      font-weight: 300;
+      text-transform: uppercase;
     }
 
     .footer-tagline {
@@ -1795,8 +1829,9 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
 
   heroSlides: string[] = [
     'assets/images/_MG_0013.jpg',
-    'assets/images/_MG_0079.jpg',
-    'assets/images/_MG_0207.jpg',
+    'assets/images/_MG_1387.jpg',
+    'assets/images/_MG_0453.jpg',
+    'assets/images/_MG_1327.jpg',
     'assets/images/_MG_0327.jpg',
     'assets/images/_MG_1313.jpg'
   ];
@@ -2041,14 +2076,49 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   getServiceImage(service: Service): string | null {
-    const name = this.serviceEnglishKey(service.name);
+    // 1) Preferujemy zdjęcie ustawione w panelu /admin/services (Service.image_url).
+    if (service?.image_url) {
+      return this.content.resolveImage(service.image_url);
+    }
+    // 2) Fallback: domyślne zdjęcia w assets dla znanych zabiegów,
+    //    używane tylko gdy admin nie ustawił własnego zdjęcia.
+    //    Dopasowanie po angielskiej nazwie (case-insensitive), z normalizacją
+    //    znaków takich jak „&" / „and" / „with" – tak żeby zarówno stare,
+    //    jak i nowe nazwy z bazy były obsłużone.
+    const norm = (v: string) =>
+      v.toLowerCase()
+        .replace(/&/g, ' and ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const englishName = norm(this.serviceEnglishKey(service.name));
+    const polishName = norm(typeof service.name === 'string' ? '' : (service.name?.['pl'] || ''));
+
     const images: { [key: string]: string } = {
-      'Kobido Facelifting Massage': 'assets/images/_MG_1327.jpg',
-      'Head Spa Classic Ritual': 'assets/images/_MG_0275.jpg',
-      'Head Spa Classic & Face': 'assets/images/_MG_1387.jpg',
-      'VIP Head Spa Ritual': 'assets/images/_MG_0453.jpg',
+      // Klasyczny
+      'head spa classic ritual': 'assets/images/_MG_0275.jpg',
+      // Z masażem twarzy (różne warianty nazw, jakie pojawiały się w DB / seederach)
+      'head spa classic with facial': 'assets/images/_MG_1387.jpg',
+      'head spa classic and face': 'assets/images/_MG_1387.jpg',
+      'head spa classic + face': 'assets/images/_MG_1387.jpg',
+      // VIP
+      'vip head spa ritual': 'assets/images/_MG_0453.jpg',
+      // Kobido
+      'kobido facelifting massage': 'assets/images/_MG_1327.jpg',
+      'kobido': 'assets/images/_MG_1327.jpg',
     };
-    return images[name] || null;
+
+    // Najpierw spróbuj po nazwie EN, potem po PL (gdyby admin zmienił EN).
+    if (images[englishName]) return this.content.resolveImage(images[englishName]);
+    if (polishName.includes('masaż twarzy') || polishName.includes('twarz')) {
+      return this.content.resolveImage('assets/images/_MG_1387.jpg');
+    }
+    if (polishName.includes('vip')) return this.content.resolveImage('assets/images/_MG_0453.jpg');
+    if (polishName.includes('kobido')) return this.content.resolveImage('assets/images/_MG_1327.jpg');
+    if (polishName.includes('klasyczn') || polishName.includes('classic')) {
+      return this.content.resolveImage('assets/images/_MG_0275.jpg');
+    }
+
+    return null;
   }
 
   /* ----------------------- CMS (page_sections) ----------------------- */
@@ -2127,7 +2197,7 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   /** Ścieżka obrazka sekcji z fallbackiem do statycznego asset-a. */
   cmsImage(sectionKey: string, fallback: string): string {
     const s = this.cms[sectionKey];
-    return s?.image_url ? this.content.resolveImage(s.image_url) : fallback;
+    return this.content.resolveImage(s?.image_url || fallback);
   }
 
   /** True gdy w bazie istnieje niepusta wartość body dla tej sekcji. */
@@ -2155,10 +2225,8 @@ export class HomeComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private loadGallery(): void {
-    this.apiService.getGallery().subscribe(
-      (data) => this.galleryItems = data,
-      (error) => console.error('Error loading gallery:', error)
-    );
+    // Sekcja galerii usunięta z home page — funkcja celowo nie robi nic.
+    // Zostawiona pusta, żeby nie psuć ewentualnych referencji w przyszłości.
   }
 
   private loadReviews(): void {

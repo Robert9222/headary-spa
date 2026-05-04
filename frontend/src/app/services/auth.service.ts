@@ -49,6 +49,12 @@ export class AuthService {
     return localStorage.getItem(this.tokenKey);
   }
 
+  /** Czyści sesję lokalnie (bez wywoływania /auth/logout). */
+  clearSession(): void {
+    localStorage.removeItem(this.tokenKey);
+    this.currentUserSubject.next(null);
+  }
+
   isAuthenticated(): boolean {
     return !!this.getToken();
   }
@@ -66,4 +72,3 @@ export class AuthService {
     return null;
   }
 }
-

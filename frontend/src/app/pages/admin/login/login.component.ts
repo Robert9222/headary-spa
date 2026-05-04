@@ -1,7 +1,7 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {AuthService} from "@services/auth.service";
 
 @Component({
@@ -143,15 +143,22 @@ import {AuthService} from "@services/auth.service";
 
   `]
 })
-export class AdminLoginComponent {
+export class AdminLoginComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   email: string = '';
   password: string = '';
   isLoading: boolean = false;
   error: string = '';
 
+  ngOnInit(): void {
+    const reason = this.route.snapshot.queryParamMap.get('reason');
+    if (reason === 'session_expired') {
+      this.error = 'Sesja wygasła — zaloguj się ponownie.';
+    }
+  }
 
   onLogin(): void {
     if (!this.email || !this.password) {

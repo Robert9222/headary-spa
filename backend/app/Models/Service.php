@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\NormalizesImageUrls;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
 class Service extends Model
 {
     use HasTranslations;
+    use NormalizesImageUrls;
 
     public $translatable = ['name', 'description'];
 
@@ -26,6 +28,7 @@ class Service extends Model
         'is_active' => 'boolean',
         'price' => 'decimal:2',
     ];
+
 
     public function appointments()
     {

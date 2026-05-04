@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService } from '../../services/api.service';
+import { ContentService } from '../../services/content.service';
 import { GalleryItem } from '../../models';
 
 @Component({
@@ -16,7 +17,7 @@ import { GalleryItem } from '../../models';
           <div *ngFor="let item of galleryItems"
                class="gallery-card"
                (click)="openLightbox(item)">
-            <img [src]="item.image_url" [alt]="item.title">
+            <img [src]="content.resolveImage(item.image_url)" [alt]="item.title">
             <div class="overlay">
               <p>{{ item.title }}</p>
             </div>
@@ -28,7 +29,7 @@ import { GalleryItem } from '../../models';
       <div *ngIf="selectedItem" class="lightbox" (click)="closeLightbox()">
         <div class="lightbox-content" (click)="$event.stopPropagation()">
           <button class="close-btn" (click)="closeLightbox()">×</button>
-          <img [src]="selectedItem.image_url" [alt]="selectedItem.title">
+          <img [src]="content.resolveImage(selectedItem.image_url)" [alt]="selectedItem.title">
           <div class="lightbox-info">
             <h2>{{ selectedItem.title }}</h2>
             <p>{{ selectedItem.description }}</p>
@@ -194,7 +195,7 @@ export class GalleryComponent implements OnInit {
   galleryItems: GalleryItem[] = [];
   selectedItem: GalleryItem | null = null;
 
-  constructor(private apiService: ApiService) {}
+  constructor(private apiService: ApiService, public content: ContentService) {}
 
   ngOnInit(): void {
     this.apiService.getGallery().subscribe(

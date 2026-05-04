@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ApiService } from '../../services/api.service';
+import { ContentService } from '../../services/content.service';
 import { TranslationService } from '../../services/translation.service';
 import { Service } from '../../models';
 
@@ -17,7 +18,7 @@ import { Service } from '../../models';
 
         <div class="services-grid">
           <div *ngFor="let service of services" class="service-detail-card">
-            <img [src]="service.image_url" [alt]="serviceName(service)" class="service-image">
+            <img [src]="content.resolveImage(service.image_url)" [alt]="serviceName(service)" class="service-image">
             <div class="service-info">
               <h2>{{ serviceName(service) }}</h2>
               <p class="description">{{ serviceDescription(service) }}</p>
@@ -154,6 +155,7 @@ export class ServicesComponent implements OnInit, OnDestroy {
   constructor(
     private apiService: ApiService,
     private translation: TranslationService,
+    public content: ContentService,
   ) {}
 
   ngOnInit(): void {

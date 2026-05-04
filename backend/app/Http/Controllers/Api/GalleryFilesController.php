@@ -94,10 +94,14 @@ class GalleryFilesController extends Controller
 
         $path = $file->storeAs(self::FOLDER, $name, 'public');
 
+        // Konwersja do WebP (oszczędność transferu ~70%). Po sukcesie ścieżka
+        // wskazuje już na plik .webp, oryginał jest usuwany.
+        $path = WebpConverter::convert($path);
+
         return response()->json([
             'name' => basename($path),
             'path' => $path,
-            'url' => $disk->url($path),
+            'url' => '/storage/' . ltrim($path, '/'),
             'size' => $disk->size($path),
             'modified' => $disk->lastModified($path),
         ], 201);

@@ -140,10 +140,10 @@ import { PageSection } from '../../../models';
           <h2>{{ translate('about.certificates') }}</h2>
           <div class="cert-grid">
             <button type="button" class="cert-item" (click)="openCertificate('assets/images/certyfikat1.jpg')">
-              <img src="assets/images/certyfikat1.jpg" alt="Certyfikat 1" loading="lazy">
+              <img [src]="content.resolveImage('assets/images/certyfikat1.jpg')" alt="Certyfikat 1" loading="lazy">
             </button>
             <button type="button" class="cert-item" (click)="openCertificate('assets/images/certyfikat2.jpg')">
-              <img src="assets/images/certyfikat2.jpg" alt="Certyfikat 2" loading="lazy">
+              <img [src]="content.resolveImage('assets/images/certyfikat2.jpg')" alt="Certyfikat 2" loading="lazy">
             </button>
           </div>
         </section>

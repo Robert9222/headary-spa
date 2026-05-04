@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\PageSection;
+use App\Services\WebpConverter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -88,7 +89,10 @@ class PageSectionController extends Controller
         ]);
 
         $path = $request->file('image')->store('page-sections', 'public');
-        $url = Storage::disk('public')->url($path);
+        // Konwersja do WebP (jeśli możliwa) — odchudza zdjęcie.
+        $path = WebpConverter::convert($path);
+        // Względna ścieżka — frontend doklei właściwy host API (dev/prod).
+        $url = '/storage/' . ltrim($path, '/');
 
         return response()->json([
             'path' => $path,
@@ -108,7 +112,7 @@ class PageSectionController extends Controller
         return $request->validate([
             'page_key' => 'required|string|max:100',
             'section_key' => ['required', 'string', 'max:100', $uniqueRule],
-            'type' => 'required|string|in:hero,rich-text,two-column-lists,list,warning-list,cta',
+            'type' => 'required|string|in:hero,rich-text,image-text,steps,two-column-lists,list,warning-list,cta',
             'order' => 'nullable|integer',
             'is_active' => 'nullable|boolean',
             'image_url' => 'nullable|string',
