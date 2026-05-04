@@ -1,2 +1,2 @@
-*
-!.gitignore
+# Śledzimy zawartość public/ (uploady admina, obrazy autoseedowane).
+!*

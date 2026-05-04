@@ -15,7 +15,9 @@ desktop.ini
 $RECYCLE.BIN/
 
 # ====== Środowisko / sekrety ======
-# (Te pliki NIGDY nie powinny trafić na GitLaba)
+# (Te pliki NIGDY nie powinny trafić na GitHub)
+.env
+.env.local
 .env.*.local
 *.pem
 *.key
@@ -30,9 +32,10 @@ yarn-error.log*
 backend/database/database.sqlite
 backend/database/*.sqlite-journal
 
-# ====== Storage uploadów (zachowujemy strukturę katalogów, nie pliki userów) ======
-backend/storage/app/public/*
-!backend/storage/app/public/.gitkeep
+# ====== Storage uploadów ======
+# Śledzimy zawartość storage/app/public/ (pliki wgrane przez admina, autoseed obrazów).
+# Runtime (storage/framework, storage/logs) nadal ignorowany przez wewnętrzne .gitignore Laravela.
+backend/public/storage
 
 # ====== Frontend build / cache ======
 frontend/dist/
