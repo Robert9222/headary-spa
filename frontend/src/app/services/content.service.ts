@@ -94,9 +94,15 @@ export class ContentService {
     return h === 'localhost' || h === '127.0.0.1';
   }
 
-  /** Bazowy URL API (bez końcowego /). */
+  /** Bazowy URL API (bez końcowego /).
+   *  W dev zwracamy pusty string — używamy względnych URL `/api/...` i
+   *  `/storage/...`, które Angularowe dev-proxy przekierowuje na backend
+   *  (patrz `frontend/proxy.conf.json`). Dzięki temu obrazy i requesty API
+   *  nie wymagają twardego portu 8000 i działają tak samo przeciwko
+   *  lokalnemu Laravelowi, jak i przeciwko produkcji ustawionej w proxy.
+   */
   private getApiBase(): string {
-    if (this.isLocalDev()) return 'http://localhost:8000';
+    if (this.isLocalDev()) return '';
     if (typeof window !== 'undefined') return window.location.origin;
     return 'https://headaryspa.motivogroup.pl';
   }
