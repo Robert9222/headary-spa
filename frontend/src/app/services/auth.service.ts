@@ -7,7 +7,9 @@ import { tap } from 'rxjs/operators';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'https://headaryspa.motivogroup.pl/api';
+  // Względny URL — w dev obsługiwany przez Angularowe proxy
+  // (frontend/proxy.conf.json), w produkcji ten sam origin co aplikacja.
+  private apiUrl = '/api';
   private currentUserSubject = new BehaviorSubject<any>(this.getUserFromLocalStorage());
   public currentUser$ = this.currentUserSubject.asObservable();
 

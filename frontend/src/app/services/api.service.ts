@@ -6,7 +6,9 @@ import { Observable } from 'rxjs';
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = 'https://headaryspa.motivogroup.pl/api';
+  // Względny URL — w dev obsługiwany przez Angularowe proxy
+  // (frontend/proxy.conf.json), w produkcji ten sam origin co aplikacja.
+  private apiUrl = '/api';
 
   constructor(private http: HttpClient) {}
 

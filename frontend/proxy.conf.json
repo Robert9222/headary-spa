@@ -1,0 +1,18 @@
+{
+  "/api": {
+    "target": "https://headaryspa.motivogroup.pl",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/storage": {
+    "target": "https://headaryspa.motivogroup.pl",
+    "secure": false,
+    "changeOrigin": true
+  },
+  "/sanctum": {
+    "target": "https://headaryspa.motivogroup.pl",
+    "secure": false,
+    "changeOrigin": true
+  }
+}
