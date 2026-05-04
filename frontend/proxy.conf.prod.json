@@ -1,18 +1,19 @@
 {
   "/api": {
-    "target": "http://127.0.0.1:8000",
+    "target": "https://headaryspa.motivogroup.pl",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
   "/storage": {
-    "target": "http://127.0.0.1:8000",
+    "target": "https://headaryspa.motivogroup.pl",
     "secure": false,
     "changeOrigin": true
   },
   "/sanctum": {
-    "target": "http://127.0.0.1:8000",
+    "target": "https://headaryspa.motivogroup.pl",
     "secure": false,
     "changeOrigin": true
   }
 }
+
