@@ -32,10 +32,14 @@ yarn-error.log*
 backend/database/database.sqlite
 backend/database/*.sqlite-journal
 
-# ====== Storage uploadów ======
-# Śledzimy zawartość storage/app/public/ (pliki wgrane przez admina, autoseed obrazów).
-# Runtime (storage/framework, storage/logs) nadal ignorowany przez wewnętrzne .gitignore Laravela.
+# ====== Storage ======
+# Śledzimy CAŁY katalog backend/storage (włącznie z runtime: framework, logs, app/private).
+# Symlink backend/public/storage -> backend/storage/app/public nadal ignorujemy.
 backend/public/storage
+!backend/storage/
+!backend/storage/**
+!backend/storage/**/*.log
+!backend/storage/**/*.key
 
 # ====== Frontend build / cache ======
 frontend/dist/

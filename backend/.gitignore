@@ -16,9 +16,15 @@
 /public/build
 /public/hot
 /public/storage
-/storage/*.key
 /storage/pail
 /vendor
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Cały katalog storage trafia do repo (włącznie z logami i kluczami)
+!storage/
+!storage/**
+!storage/**/*.log
+!storage/**/*.key
+
