@@ -34,7 +34,7 @@ import { Service } from '../../models';
                 </div>
               </div>
 
-              <a href="https://timma.no/salong/headary-spa" target="_blank" class="book-btn">
+              <a href="https://varaa.timma.fi/headaryspa" target="_blank" class="book-btn">
                 Book This Service
               </a>
             </div>

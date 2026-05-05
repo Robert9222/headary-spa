@@ -30,7 +30,7 @@ import { TranslationService } from '../../services/translation.service';
 
           <div class="header-actions">
             <app-language-switcher></app-language-switcher>
-            <a href="https://timma.no/salong/headary-spa" target="_blank" class="booking-btn">
+            <a href="https://varaa.timma.fi/headaryspa" target="_blank" class="booking-btn">
               {{ translate('header.bookAppointment') }}
             </a>
             <!-- Hamburger (mobile only) -->
@@ -72,7 +72,7 @@ import { TranslationService } from '../../services/translation.service';
         <a (click)="scrollTo('contact'); closeMenu()" class="drawer-link">{{ translate('nav.contact') }}</a>
       </nav>
       <div class="drawer-footer">
-        <a href="https://timma.no/salong/headary-spa" target="_blank" class="booking-btn drawer-cta" (click)="closeMenu()">
+        <a href="https://varaa.timma.fi/headaryspa" target="_blank" class="booking-btn drawer-cta" (click)="closeMenu()">
           {{ translate('header.bookAppointment') }}
         </a>
         <p class="drawer-contact">

@@ -28,7 +28,7 @@ import { takeUntil } from 'rxjs/operators';
           <div class="hero-content">
             <h1>{{ cmsTitle('hero', 'hero.welcome') }}</h1>
             <p>{{ cmsBody('hero', 'hero.subtitle') }}</p>
-            <a [href]="cmsMetaString('hero', 'cta_url', 'https://timma.no/salon/headary-spa')"
+            <a [href]="cmsMetaString('hero', 'cta_url', 'https://varaa.timma.fi/headaryspa')"
                target="_blank" class="cta-btn">{{ cmsCtaLabel('hero', 'hero.cta') }}</a>
           </div>
         </div>
@@ -86,7 +86,7 @@ import { takeUntil } from 'rxjs/operators';
                     <span class="service-price">{{ service.price }}€</span>
                   </div>
                   <p class="service-description">{{ translateServiceDescription(service) }}</p>
-                  <a href="https://timma.no/salon/headary-spa" target="_blank" class="book-link">
+                  <a href="https://varaa.timma.fi/headaryspa" target="_blank" class="book-link">
                     {{ translate('hero.cta') }} →
                   </a>
                 </div>
@@ -207,7 +207,7 @@ import { takeUntil } from 'rxjs/operators';
             </div>
             <div class="footer-links">
               <h4>Quick Links</h4>
-              <a href="https://timma.no/salon/headary-spa" target="_blank" class="footer-social-link">
+              <a href="https://varaa.timma.fi/headaryspa" target="_blank" class="footer-social-link">
                 <svg class="footer-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3zm0 2-7 4.5L5 6h14zm0 12H5a1 1 0 0 1-1-1V8.38l7.53 4.87a.5.5 0 0 0 .94 0L20 8.38V17a1 1 0 0 1-1 1z"/></svg>
                 {{ translate('hero.cta') }}
               </a>
@@ -261,7 +261,7 @@ import { takeUntil } from 'rxjs/operators';
       </footer>
 
       <!-- Floating CTA (mobile only) -->
-      <a *ngIf="showFloatingCta" href="https://timma.no/salon/headary-spa" target="_blank" class="floating-cta">
+      <a *ngIf="showFloatingCta" href="https://varaa.timma.fi/headaryspa" target="_blank" class="floating-cta">
         {{ translate('floatingCta') }}
       </a>
 
