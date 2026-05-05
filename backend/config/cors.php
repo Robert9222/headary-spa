@@ -15,8 +15,8 @@ return [
     'allowed_origins' => array_values(array_filter([
         'http://localhost:4200',
         'http://localhost:3000',
-        'https://headaryspa.com',
-        'https://www.headaryspa.com',
+        'https://headaryspa.motivogroup.pl',
+        'https://www.headaryspa.motivogroup.pl',
         env('FRONTEND_URL'),
     ])),
 
