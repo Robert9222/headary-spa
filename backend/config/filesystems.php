@@ -40,7 +40,14 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => storage_path('app/public'),
+            // UWAGA: zapisujemy bezpośrednio do public/storage/, ŻEBY NIE
+            // POLEGAĆ NA SYMLINKU. Na shared hostingu domena wskazuje na
+            // katalog `public/` i wszystko powyżej jest poza document rootem
+            // (a `Options +FollowSymLinks` bywa wyłączone). Trzymanie plików
+            // wprost w `public/storage/` sprawia, że Apache serwuje je jako
+            // zwykłe statyki — Laravel `.htaccess` przekierowuje do
+            // `index.php` tylko, jeżeli plik fizycznie nie istnieje.
+            'root' => public_path('storage'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
             'throw' => false,
@@ -74,7 +81,9 @@ return [
     */
 
     'links' => [
-        public_path('storage') => storage_path('app/public'),
+        // Celowo puste: dysk `public` zapisuje wprost do public_path('storage'),
+        // więc `php artisan storage:link` nic już nie musi linkować.
+        // Patrz komentarz przy disku `public` powyżej.
     ],
 
 ];

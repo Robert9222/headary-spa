@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
 
@@ -33,7 +34,9 @@ class WebpConverter
             return $relativePath;
         }
 
-        $publicRoot = storage_path('app/public');
+        // Bierzemy realny root dysku 'public' (po zmianie konfiguracji to
+        // jest `public_path('storage')`, więc nie hardkodujemy ścieżki).
+        $publicRoot = rtrim(Storage::disk('public')->path(''), DIRECTORY_SEPARATOR);
         $absolute = $publicRoot . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
         if (!is_file($absolute)) {
             return $relativePath;

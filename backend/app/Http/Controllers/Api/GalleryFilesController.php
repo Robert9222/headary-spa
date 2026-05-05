@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\WebpConverter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -131,7 +132,7 @@ class GalleryFilesController extends Controller
 
     /**
      * Skopiuj zdjęcia ze `frontend/src/assets/images` (jeżeli dostępne)
-     * do `storage/app/public/images`.
+     * do katalogu `images` na dysku 'public' (czyli `public/storage/images`).
      */
     private function seedFromFrontend($disk): void
     {
